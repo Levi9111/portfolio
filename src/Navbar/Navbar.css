@@ -1,0 +1,17 @@
+.navbar {
+  position: fixed;
+  width: 100%;
+  background-color: #232323;
+  color: #f8f8f0;
+  opacity: 0.8;
+}
+
+.link:hover {
+  color: #20c997;
+}
+
+.active-link {
+  border-bottom: 1px solid transparent;
+  border-color: #20c997;
+  
+}

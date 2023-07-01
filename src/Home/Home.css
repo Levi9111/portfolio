@@ -1,0 +1,38 @@
+.home {
+  height: 100vh;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+    url("../assets/workplace.jpg");
+  background-size: cover;
+  background-position: ccenter;
+  background-repeat: no-repeat;
+  color: white;
+  font-family: "Dancing Script", cursive;
+}
+
+.btn-container {
+  width: 90vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 50px;
+}
+
+.btn {
+  font-size: 20px;
+  border: 1px solid #20c997;
+  border-radius: 20px;
+  width: 100px;
+  padding: 10px;
+  color: #20c997;
+  font-weight: bold;
+  transition: all .4s;
+  
+}
+
+.btn:hover {
+  color: white;
+  background-color: #20c997;
+}
