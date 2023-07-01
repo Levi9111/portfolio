@@ -1,6 +1,8 @@
 import "./Home.css";
 import Typewriter from "typewriter-effect";
-import resume from "./../assets/resume/my-resume.pdf";
+import resume from "../../assets/resume/my-resume.pdf";
+import { HiChevronDown } from "react-icons/hi";
+import { motion } from "framer-motion";
 
 const Home = () => {
   const handleResumeDownload = () => {
@@ -9,6 +11,12 @@ const Home = () => {
     link.download = "resume-shanjid.pdf";
     link.click();
   };
+
+  const handleScrollToAbout = () => {
+    const aboutSection = document.getElementById("about");
+    aboutSection.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <section className="home">
       <h2 className="md:text-xl text-md">Hello</h2>
@@ -33,6 +41,23 @@ const Home = () => {
         <button className="btn" onClick={handleResumeDownload}>
           Hire Me
         </button>
+      </div>
+
+      <div className="">
+        <motion.div
+          animate={{
+            y: [0, 24, 0],
+          }}
+          transition={{
+            duration: 1.2,
+            repeat: "infinity",
+            repeatType: "loop",
+          }}
+        >
+          <button className="mt-12" onClick={handleScrollToAbout}>
+            <HiChevronDown className="h-12 w-12" />
+          </button>
+        </motion.div>
       </div>
     </section>
   );

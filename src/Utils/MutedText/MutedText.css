@@ -1,0 +1,26 @@
+.muted-text {
+  font-size: 120px;
+  color: #6c757d;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0.3;
+  padding-top: 50px;
+}
+
+@media (max-width: 500px) {
+  .muted-text {
+    font-size: 70px;
+  }
+}
+
+@media (max-width: 300px) {
+  .muted-text {
+    font-size: 55px;
+  }
+}
+
+@media (max-width: 200px) {
+  .muted-text {
+    font-size: 35px;
+  }
+}

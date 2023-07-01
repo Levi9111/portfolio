@@ -4,7 +4,7 @@
   place-content: center;
   text-align: center;
   background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
-    url("../assets/workplace.jpg");
+    url("../../assets/workplace.jpg");
   background-size: cover;
   background-position: ccenter;
   background-repeat: no-repeat;
