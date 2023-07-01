@@ -1,7 +1,14 @@
 import "./Home.css";
 import Typewriter from "typewriter-effect";
+import resume from "./../assets/resume/my-resume.pdf";
 
 const Home = () => {
+  const handleResumeDownload = () => {
+    const link = document.createElement("a");
+    link.href = resume;
+    link.download = "resume-shanjid.pdf";
+    link.click();
+  };
   return (
     <section className="home">
       <h2 className="md:text-xl text-md">Hello</h2>
@@ -23,7 +30,9 @@ const Home = () => {
       <p className="font-bold text-2xl">Based in Chandpur,Bangladesh</p>
 
       <div className="btn-container">
-        <button className="btn">Hire Me</button>
+        <button className="btn" onClick={handleResumeDownload}>
+          Hire Me
+        </button>
       </div>
     </section>
   );
