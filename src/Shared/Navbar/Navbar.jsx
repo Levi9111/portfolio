@@ -3,6 +3,7 @@ import logo from "../../assets/logo.png";
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import { FaBars } from "react-icons/fa";
+import { Link as ScrollLink } from "react-scroll";
 
 const Navbar = () => {
   const [active, setActive] = useState(false);
@@ -22,12 +23,25 @@ const Navbar = () => {
         <NavLink className="link" to="/">
           Home
         </NavLink>
-        <NavLink className="link" to="/about">
+        <ScrollLink
+          className="link"
+          to="about"
+          smooth={true}
+          duration={500}
+          offset={-50}
+        >
           About Me
-        </NavLink>
-        <NavLink className="link" to="/services">
-          What I Do
-        </NavLink>
+        </ScrollLink>
+        <ScrollLink
+          className="link"
+          to="my-work"
+          smooth={true}
+          duration={500}
+          offset={-50}
+        >
+          What I Use
+        </ScrollLink>
+
         <NavLink className="link" to="/resume">
           Resume
         </NavLink>
