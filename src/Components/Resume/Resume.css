@@ -1,4 +1,50 @@
 #resume {
   min-height: 100vh;
   background-color: #212529;
+  padding: 20px;
+}
+
+.year {
+  color: white;
+  background-color: #20c997;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 300;
+  margin: 20px 0;
+}
+
+.resume-text {
+  color: #20c997;
+  font-size: 20px;
+}
+
+.resume-text span {
+  color: red;
+}
+
+.education-container {
+  width: 50%;
+  height: 120px;
+  padding: 10px;
+  border-radius: 10px;
+}
+.courses-table {
+  width: 100%;
+  color: white;
+  font-size: 20px;
+}
+
+.courses-table td:first-child {
+  font-weight: 600;
+}
+
+.courses-table tr {
+  border-bottom: 1px solid #20c997;
+  padding: 10px 0; /* Adjust the padding values as per your preference */
+}
+
+@media screen and (max-width: 600px) {
+  .courses-container {
+    overflow-x: scroll;
+  }
 }
