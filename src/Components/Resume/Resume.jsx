@@ -1,5 +1,6 @@
 import SectionTitle from "../../Utils/SectionTitle/SectionTitle";
 import "./Resume.css";
+import ProgressBar from "@ramonak/react-progress-bar";
 
 const Resume = () => {
   return (

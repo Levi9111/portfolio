@@ -43,8 +43,11 @@
   padding: 10px 0; /* Adjust the padding values as per your preference */
 }
 
+
 @media screen and (max-width: 600px) {
   .courses-container {
     overflow-x: scroll;
   }
 }
+
+

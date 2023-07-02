@@ -1,0 +1,60 @@
+#contact {
+  background-color: #212529;
+  padding: 10px 20px;
+}
+
+.contact-container {
+  display: grid;
+  grid-gap: 20px;
+  grid-template-columns: repeat(
+    1,
+    1fr
+  ); /* Change to single column layout on small screens */
+}
+
+.address {
+  grid-column: 1/2;
+}
+
+.message {
+  grid-column: 1/2; /* Span the entire column on small screens */
+}
+
+.message input[type="text"],
+.message input[type="email"],
+.message textarea {
+  background: #232a31;
+  border-color: #232a31;
+  color: #fff;
+}
+
+.message input::placeholder,
+.message textarea::placeholder {
+  font-size: 18px;
+  color: gray;
+}
+
+.message input[type="submit"] {
+  background-color: #20c997;
+  color: aliceblue;
+  font-size: 18px;
+  height: 50px;
+  border-radius: 10px;
+  padding: 10px 20px;
+  text-align: center;
+}
+
+.message input[type="submit"]:hover {
+  background-color: #1b9e77;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .contact-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .message {
+    grid-column: 2/-1;
+  }
+}

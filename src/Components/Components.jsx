@@ -1,6 +1,8 @@
 import About from "./About/About";
+import Contact from "./Contact/Contact";
 import Home from "./Home/Home";
 import MyWork from "./MyWork/MyWork";
+import Portfolio from "./Portfolio/Portfolio";
 import Resume from "./Resume/Resume";
 
 const Components = () => {
@@ -10,6 +12,8 @@ const Components = () => {
       <About />
       <MyWork />
       <Resume />
+      <Portfolio />
+      <Contact />
     </>
   );
 };
