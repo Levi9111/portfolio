@@ -18,7 +18,7 @@ const Home = () => {
   };
 
   return (
-    <section className="home">
+    <section id="home">
       <h2 className="md:text-xl text-md">Hello</h2>
       <div className="typeweitter md:text-4xl text-xl font-bold my-12">
         <Typewriter
