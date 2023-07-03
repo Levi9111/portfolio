@@ -1,7 +1,8 @@
 #resume {
   min-height: 100vh;
   background-color: #212529;
-  padding: 20px;
+  padding: 10px;
+  padding-bottom: 40px;
 }
 
 .year {
@@ -24,9 +25,10 @@
 
 .education-container {
   width: 50%;
-  height: 120px;
+  min-height: 120px;
   padding: 10px;
   border-radius: 10px;
+  margin-bottom: 50px;
 }
 .courses-table {
   width: 100%;
@@ -43,11 +45,12 @@
   padding: 10px 0; /* Adjust the padding values as per your preference */
 }
 
-
 @media screen and (max-width: 600px) {
   .courses-container {
     overflow-x: scroll;
   }
+
+  .education-container {
+    width: 100%;
+  }
 }
-
-

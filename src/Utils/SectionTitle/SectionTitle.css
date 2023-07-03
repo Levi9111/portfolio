@@ -37,6 +37,7 @@
 @media (max-width: 500px) {
   .muted-text {
     font-size: 70px;
+    margin-bottom: 50px;
   }
 }
 
