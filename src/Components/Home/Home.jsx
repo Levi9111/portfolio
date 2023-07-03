@@ -39,7 +39,7 @@ const Home = () => {
 
       <div className="btn-container">
         <button className="btn" onClick={handleResumeDownload}>
-          Hire Me
+          My Resume
         </button>
       </div>
 

@@ -1,17 +1,26 @@
 .navbar {
   position: fixed;
   width: 100%;
-  background-color: #232323;
+  /* background-color: #232323; */
   color: #f8f8f0;
-  opacity: 0.8;
+  transition: background-color 0.3s;
+  z-index: 100;
+}
+
+.navbar.scrolled {
+  background-color: #232323;
 }
 
 .link:hover {
   color: #20c997;
+  cursor: pointer;
 }
 
 .active-link {
   border-bottom: 1px solid transparent;
   border-color: #20c997;
-  
+}
+
+.active {
+  color: #20c997;
 }
