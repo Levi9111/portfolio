@@ -8,7 +8,7 @@ const Home = () => {
   const handleResumeDownload = () => {
     const link = document.createElement("a");
     link.href = resume;
-    link.download = "resume-shanjid.pdf";
+    link.download = "Shanjid Ahmad's Resume.pdf";
     link.click();
   };
 
