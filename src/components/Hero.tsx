@@ -16,17 +16,14 @@ const fadeUp: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeInOut" } },
 };
 
-// Define type for social links tuple
-type SocialLink = [
-  string,
-  React.ComponentType<React.SVGProps<SVGSVGElement>>,
-  string
-];
-
-const socialLinks: SocialLink[] = [
-  ["https://github.com/levi9111", Github, "GitHub"],
-  ["www.linkedin.com/in/shanjid-ahmad-b77b5427b", Linkedin, "LinkedIn"],
-  ["mailto:shanjidahmad502@gmail.com", Mail, "Email"],
+const socialLinks = [
+  { href: "https://github.com/levi9111", icon: Github, label: "GitHub" },
+  {
+    href: "www.linkedin.com/in/shanjid-ahmad-b77b5427b",
+    icon: Linkedin,
+    label: "LinkedIn",
+  },
+  { href: "mailto:shanjidahmad502@gmail.com", icon: Mail, label: "Email" },
 ];
 
 const Hero: React.FC = () => {
@@ -240,21 +237,24 @@ const Hero: React.FC = () => {
           variants={fadeUp}
           className="flex justify-center space-x-6 mb-16"
         >
-          {socialLinks.map(([href, Icon, label], i) => (
-            <motion.a
-              key={i}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative p-3 rounded-full bg-gray-100/70 dark:bg-gray-800/70 backdrop-blur-sm hover:bg-purple-100 dark:hover:bg-purple-900 transition-all duration-300 hover:scale-110 hover:shadow-lg overflow-hidden"
-              aria-label={label}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Icon className="relative z-10 w-6 h-6 text-gray-600 dark:text-gray-300 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" />
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </motion.a>
-          ))}
+          {socialLinks.map((link, index) => {
+            const IconComponent = link.icon;
+            return (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative p-3 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-full border border-gray-200/50 dark:border-gray-700/50 hover:border-purple-300/50 dark:hover:border-purple-500/50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/10 overflow-hidden"
+                aria-label={link.label}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <IconComponent className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors relative z-10" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full" />
+                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+              </a>
+            );
+          })}
         </motion.div>
 
         {/* Enhanced Scroll Button */}
