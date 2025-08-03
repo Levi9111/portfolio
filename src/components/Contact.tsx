@@ -6,6 +6,8 @@ import emailjs from "@emailjs/browser";
 const SERVICE_ID = import.meta.env.VITE_EMAIL_JS_SERVICE_ID;
 const TEMPLATE_ID = import.meta.env.VITE_EMAIL_JS_TEMPLATE_ID;
 const PUBLIC_KEY = import.meta.env.VITE_EMAIL_JS_PUBLIC_KEY;
+const AUTO_REPLY_TEMPLATE_ID = import.meta.env
+  .VITE_EMAIL_JS_AUTO_REPLY_TEMPLATE_ID;
 
 const contactInfo = [
   {
@@ -33,6 +35,7 @@ const Contact: React.FC = () => {
   const [formData, setFormData] = React.useState({
     name: "",
     email: "",
+    subject: "",
     message: "",
   });
   const [status, setStatus] = React.useState<null | "success" | "error">(null);
@@ -64,7 +67,6 @@ const Contact: React.FC = () => {
     setLoading(true);
     setStatus(null);
 
-    // Basic client-side validation
     if (!formData.name || !formData.email || !formData.message) {
       setStatus("error");
       setLoading(false);
@@ -78,14 +80,29 @@ const Contact: React.FC = () => {
         {
           from_name: formData.name,
           from_email: formData.email,
+          subject: formData.subject,
           message: formData.message,
         },
         PUBLIC_KEY
       );
 
+      // Send auto-reply email to the user
+      await emailjs.send(
+        SERVICE_ID,
+        AUTO_REPLY_TEMPLATE_ID,
+        {
+          name: formData.name,
+          title: formData.subject,
+          to_email: formData.email,
+        },
+        PUBLIC_KEY
+      );
+
+      console.log(formData);
+
       console.log("Email sent:", result.text);
       setStatus("success");
-      setFormData({ name: "", email: "", message: "" });
+      setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error) {
       console.error("EmailJS error:", error);
       setStatus("error");
@@ -93,11 +110,6 @@ const Contact: React.FC = () => {
       setLoading(false);
     }
   };
-
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   console.log(formData);
-  // };
 
   return (
     <section
@@ -126,7 +138,7 @@ const Contact: React.FC = () => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-12">
-            {/* Contact Information */}
+            {/* Contact Info */}
             <div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
                 Get In Touch
@@ -224,6 +236,7 @@ const Contact: React.FC = () => {
                     disabled={loading}
                   />
                 </div>
+
                 <div>
                   <label
                     htmlFor="email"
@@ -243,6 +256,27 @@ const Contact: React.FC = () => {
                     disabled={loading}
                   />
                 </div>
+
+                {/* Optional Subject Field */}
+                <div>
+                  <label
+                    htmlFor="subject"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    Subject <span className="text-gray-400">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white transition-colors"
+                    placeholder="Project Idea / Inquiry Topic"
+                    disabled={loading}
+                  />
+                </div>
+
                 <div>
                   <label
                     htmlFor="message"
