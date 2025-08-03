@@ -1,35 +1,17 @@
 import React from 'react';
 import { Moon, Sun, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '../contexts/ThemeContext';
 
-// Mock theme context - replace with your actual theme context
 
-const useTheme = () => {
-  const [isDark, setIsDark] = React.useState(() => {
-    if (typeof window === 'undefined') return false;
-    return document.documentElement.classList.contains('dark');
-  });
-
-  const toggleTheme = React.useCallback(() => {
-    const html = document.documentElement;
-    if (html.classList.contains('dark')) {
-      html.classList.remove('dark');
-      setIsDark(false);
-    } else {
-      html.classList.add('dark');
-      setIsDark(true);
-    }
-  }, []);
-
-  return { isDark, toggleTheme };
-};
 
 const Header: React.FC = () => {
+
   const { isDark, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState('hero');
 
-  const scrollToSection = (sectionId: string) => {
+   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });

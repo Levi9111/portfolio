@@ -207,7 +207,14 @@ const About = () => {
 
               {/* Call to action */}
               <div className="mt-8">
-                <button className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25">
+                <button
+                onClick={()=>{
+                   const contactSection = document.getElementById('contact');
+                   if (contactSection) {
+                     contactSection.scrollIntoView({ behavior: 'smooth' });
+                   }
+                }}
+                 className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25">
                   <span className="relative z-10 flex items-center gap-2">
                     <Rocket className="w-5 h-5" />
                     Let's Work Together
