@@ -1,5 +1,5 @@
-import React from 'react';
-import { Heart } from 'lucide-react';
+import React from "react";
+import { Heart } from "lucide-react";
 
 const Footer: React.FC = () => {
   return (
@@ -10,9 +10,9 @@ const Footer: React.FC = () => {
             © 2025 Shanjid Ahmad. All rights reserved.
           </p>
           <p className="flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm">
-            Made with{' '}
-            <Heart className="w-4 h-4 mx-1 text-red-500 fill-current" />{' '}
-            using React & Tailwind CSS
+            Made with{" "}
+            <Heart className="w-4 h-4 mx-1 text-red-500 fill-current" /> using
+            React & Tailwind CSS
           </p>
         </div>
       </div>

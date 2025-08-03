@@ -1,7 +1,6 @@
-
-import React from 'react';
-import { ArrowDown, Github, Linkedin, Mail } from 'lucide-react';
-import { motion, Variants } from 'framer-motion';
+import React from "react";
+import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
+import { motion, Variants } from "framer-motion";
 
 const container: Variants = {
   hidden: {},
@@ -14,24 +13,28 @@ const container: Variants = {
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeInOut' } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeInOut" } },
 };
 
 // Define type for social links tuple
-type SocialLink = [string, React.ComponentType<React.SVGProps<SVGSVGElement>>, string];
+type SocialLink = [
+  string,
+  React.ComponentType<React.SVGProps<SVGSVGElement>>,
+  string
+];
 
 const socialLinks: SocialLink[] = [
-  ['https://github.com/levi9111', Github, 'GitHub'],
-  ['www.linkedin.com/in/shanjid-ahmad-b77b5427b', Linkedin, 'LinkedIn'],
-  ['mailto:shanjidahmad502@gmail.com', Mail, 'Email'],
+  ["https://github.com/levi9111", Github, "GitHub"],
+  ["www.linkedin.com/in/shanjid-ahmad-b77b5427b", Linkedin, "LinkedIn"],
+  ["mailto:shanjidahmad502@gmail.com", Mail, "Email"],
 ];
 
 const Hero: React.FC = () => {
   // Explicitly type event handler
   const scrollToAbout = (): void => {
-    const element = document.getElementById('about');
+    const element = document.getElementById("about");
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -45,7 +48,7 @@ const Hero: React.FC = () => {
       <div className="absolute bottom-[-100px] right-[-100px] w-[300px] h-[300px] rounded-full bg-blue-500 opacity-20 blur-3xl pointer-events-none animate-pulse animation-delay-2000" />
 
       <motion.div
-        className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+        className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 text-center"
         variants={container}
         initial="hidden"
         whileInView="show"
@@ -55,7 +58,7 @@ const Hero: React.FC = () => {
           variants={fadeUp}
           className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight"
         >
-          Shanjid{' '}
+          Shanjid{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 animate-gradient">
             Ahmad
           </span>
@@ -73,11 +76,15 @@ const Hero: React.FC = () => {
           className="text-lg text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed"
         >
           I build exceptional digital experiences with modern web technologies.
-          Passionate about clean code, user experience, and solving complex problems.
+          Passionate about clean code, user experience, and solving complex
+          problems.
         </motion.p>
 
         {/* Social Icons */}
-        <motion.div variants={fadeUp} className="flex justify-center space-x-6 mb-16">
+        <motion.div
+          variants={fadeUp}
+          className="flex justify-center space-x-6 mb-16"
+        >
           {socialLinks.map(([href, Icon, label], i) => (
             <a
               key={i}
