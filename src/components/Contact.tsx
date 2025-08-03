@@ -3,9 +3,9 @@ import { Mail, MapPin, Phone, Github, Linkedin } from "lucide-react";
 import { useIntersectionObserver } from "../hooks/useIntersectionObserver";
 import emailjs from "@emailjs/browser";
 
-const SERVICE_ID = "your_service_id";
-const TEMPLATE_ID = "your_template_id";
-const PUBLIC_KEY = "your_public_key";
+const SERVICE_ID = import.meta.env.VITE_EMAIL_JS_SERVICE_ID;
+const TEMPLATE_ID = import.meta.env.VITE_EMAIL_JS_TEMPLATE_ID;
+const PUBLIC_KEY = import.meta.env.VITE_EMAIL_JS_PUBLIC_KEY;
 
 const contactInfo = [
   {
@@ -93,6 +93,11 @@ const Contact: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   console.log(formData);
+  // };
 
   return (
     <section
