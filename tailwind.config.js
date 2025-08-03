@@ -11,8 +11,13 @@ export default {
         'fade-in': 'fadeIn 0.6s ease-in-out',
         'slide-up': 'slideUp 0.6s ease-out',
         'bounce': 'bounce 2s infinite',
+        gradient: 'gradient 4s ease infinite',
       },
       keyframes: {
+          gradient: {
+        '0%, 100%': { backgroundPosition: '0% 50%' },
+        '50%': { backgroundPosition: '100% 50%' },
+      },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },

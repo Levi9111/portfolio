@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, MapPin, Phone, Github, Linkedin, Twitter } from 'lucide-react';
+import { Mail, MapPin, Phone, Github, Linkedin  } from 'lucide-react';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 
 const Contact: React.FC = () => {
@@ -9,20 +9,20 @@ const Contact: React.FC = () => {
     {
       icon: Mail,
       label: 'Email',
-      value: 'alex.morgan@example.com',
-      href: 'mailto:alex.morgan@example.com',
+      value: 'shanjidahmad502@gmail.com',
+      href: 'mailto:shanjidahmad502@gmail.com',
     },
     {
       icon: Phone,
       label: 'Phone',
-      value: '+1 (555) 123-4567',
-      href: 'tel:+15551234567',
+      value: '+8801626974685',
+      href: 'tel:+8801626974685',
     },
     {
       icon: MapPin,
       label: 'Location',
       value: 'San Francisco, CA',
-      href: 'https://maps.google.com/?q=San Francisco, CA',
+      href: 'https://maps.google.com/?q=Chattogram, BAN',
     },
   ];
 
@@ -30,21 +30,16 @@ const Contact: React.FC = () => {
     {
       icon: Github,
       label: 'GitHub',
-      href: 'https://github.com',
+      href: 'https://github.com/levi9111',
       color: 'hover:text-gray-900 dark:hover:text-white',
     },
     {
       icon: Linkedin,
       label: 'LinkedIn',
-      href: 'https://linkedin.com',
+      href: 'www.linkedin.com/in/shanjid-ahmad-b77b5427b',
       color: 'hover:text-blue-600',
     },
-    {
-      icon: Twitter,
-      label: 'Twitter',
-      href: 'https://twitter.com',
-      color: 'hover:text-blue-400',
-    },
+    
   ];
 
   return (
