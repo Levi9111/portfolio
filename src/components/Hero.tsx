@@ -1,278 +1,404 @@
-import React, { useState, useRef, useEffect } from "react";
-import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Github, Linkedin, Mail, ArrowDown } from "lucide-react";
 import { motion, Variants } from "framer-motion";
 
-const container: Variants = {
+// ─── Variants ──────────────────────────────────────────────────────────────────
+
+const stagger: Variants = {
   hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.2,
-    },
-  },
+  show: { transition: { staggerChildren: 0.15, delayChildren: 0.2 } },
 };
 
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeInOut" } },
+  hidden: { opacity: 0, y: 40, filter: "blur(8px)" },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] },
+  },
 };
+
+const slideIn: Variants = {
+  hidden: { opacity: 0, x: -30 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
+// ─── Constants ─────────────────────────────────────────────────────────────────
 
 const socialLinks = [
   { href: "https://github.com/levi9111", icon: Github, label: "GitHub" },
   {
-    href: "www.linkedin.com/in/shanjid-ahmad-b77b5427b",
+    href: "https://www.linkedin.com/in/shanjid-ahmad-b77b5427b",
     icon: Linkedin,
     label: "LinkedIn",
   },
   { href: "mailto:shanjidahmad502@gmail.com", icon: Mail, label: "Email" },
 ];
 
-const Hero: React.FC = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const sectionRef = useRef<HTMLElement | null>(null);
+const TITLES = [
+  "Full-Stack Developer",
+  "MERN Stack Engineer",
+  "UI/UX Craftsman",
+  "Problem Solver",
+];
 
-  // Mouse tracking for parallax effects
+// ─── Typewriter ────────────────────────────────────────────────────────────────
+
+const Typewriter: React.FC = () => {
+  const [titleIndex, setTitleIndex] = useState(0);
+  const [displayed, setDisplayed] = useState("");
+  const [phase, setPhase] = useState<"typing" | "pause" | "erasing">("typing");
+
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = sectionRef.current?.getBoundingClientRect();
-      if (rect) {
-        setMousePosition({
-          x: ((e.clientX - rect.left) / rect.width - 0.5) * 20,
-          y: ((e.clientY - rect.top) / rect.height - 0.5) * 20,
-        });
+    const current = TITLES[titleIndex];
+    let timeout: ReturnType<typeof setTimeout>;
+    if (phase === "typing") {
+      if (displayed.length < current.length) {
+        timeout = setTimeout(
+          () => setDisplayed(current.slice(0, displayed.length + 1)),
+          55,
+        );
+      } else {
+        timeout = setTimeout(() => setPhase("pause"), 1800);
       }
-    };
-
-    const section = sectionRef.current;
-    if (section) {
-      section.addEventListener("mousemove", handleMouseMove);
-      return () => section.removeEventListener("mousemove", handleMouseMove);
+    } else if (phase === "pause") {
+      timeout = setTimeout(() => setPhase("erasing"), 400);
+    } else {
+      if (displayed.length > 0) {
+        timeout = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 30);
+      } else {
+        setTitleIndex((i) => (i + 1) % TITLES.length);
+        setPhase("typing");
+      }
     }
-  }, []);
+    return () => clearTimeout(timeout);
+  }, [displayed, phase, titleIndex]);
 
-  // Explicitly type event handler
-  const scrollToAbout = (): void => {
-    const element = document.getElementById("about");
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
+  return (
+    <span className="typewriter-wrap">
+      {displayed}
+      <span className="cursor-blink">|</span>
+    </span>
+  );
+};
+
+// ─── Social Icon ────────────────────────────────────────────────────────────────
+
+const SocialIcon: React.FC<{
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  index: number;
+}> = ({ href, icon: Icon, label, index }) => (
+  <motion.a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label={label}
+    className="social-icon"
+    variants={slideIn}
+    custom={index}
+    whileHover={{ scale: 1.12, y: -3 }}
+    whileTap={{ scale: 0.92 }}
+  >
+    <Icon size={18} />
+    <span className="social-tooltip">{label}</span>
+    <div className="social-sheen" />
+  </motion.a>
+);
+
+// ─── Hero ───────────────────────────────────────────────────────────────────────
+
+const Hero: React.FC = () => {
+  const scrollToAbout = () => {
+    document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <section
-      id="hero"
-      ref={sectionRef}
-      className="relative overflow-hidden min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 transition-colors"
-    >
-      {/* Enhanced Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Original gradient blobs with mouse tracking */}
-        <div
-          className="absolute top-[-150px] left-[-150px] w-[400px] h-[400px] rounded-full bg-purple-500 opacity-25 blur-3xl animate-pulse"
-          style={{
-            transform: `translate(${mousePosition.x * 0.4}px, ${
-              mousePosition.y * 0.4
-            }px)`,
-          }}
-        />
-        <div
-          className="absolute bottom-[-100px] right-[-100px] w-[300px] h-[300px] rounded-full bg-blue-500 opacity-25 blur-3xl animate-pulse"
-          style={{
-            transform: `translate(${mousePosition.x * -0.3}px, ${
-              mousePosition.y * -0.3
-            }px)`,
-            animationDelay: "2s",
-          }}
-        />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600&display=swap');
 
-        {/* Additional gradient blobs */}
-        <div
-          className="absolute top-1/3 right-1/4 w-80 h-80 bg-gradient-to-r from-cyan-400/12 to-blue-400/12 rounded-full blur-2xl animate-pulse-slow"
-          style={{
-            transform: `translate(${mousePosition.x * 0.5}px, ${
-              mousePosition.y * 0.5
-            }px)`,
-            animationDelay: "1s",
-          }}
-        />
-        <div
-          className="absolute bottom-1/3 left-1/5 w-96 h-96 bg-gradient-to-r from-pink-400/8 to-purple-400/8 rounded-full blur-3xl animate-pulse-slow"
-          style={{
-            transform: `translate(${mousePosition.x * -0.4}px, ${
-              mousePosition.y * -0.4
-            }px)`,
-            animationDelay: "3s",
-          }}
-        />
+        #hero-section {
+          font-family: 'Outfit', sans-serif;
+          position: relative;
+          min-height: 100svh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          /* Transparent — SpaceBackground canvas shows through */
+          background: transparent;
+        }
 
-        {/* Floating geometric shapes */}
-        <div
-          className="absolute top-1/5 left-1/3 w-12 h-12 border-2 border-purple-300/20 rotate-45 animate-spin-slow"
-          style={{
-            transform: `translate(${mousePosition.x * 0.7}px, ${
-              mousePosition.y * 0.7
-            }px) rotate(45deg)`,
-          }}
-        />
-        <div
-          className="absolute top-2/3 right-1/3 w-16 h-16 border-2 border-blue-300/15 rounded-full animate-spin-slow"
-          style={{
-            transform: `translate(${mousePosition.x * -0.5}px, ${
-              mousePosition.y * -0.5
-            }px)`,
-            animationDelay: "1s",
-          }}
-        />
-        <div
-          className="absolute bottom-1/4 left-1/6 w-10 h-10 bg-blue-300/15 rounded-full animate-bounce-slow"
-          style={{
-            transform: `translate(${mousePosition.x * -0.6}px, ${
-              mousePosition.y * -0.6
-            }px)`,
-          }}
-        />
-        <div
-          className="absolute top-3/4 right-1/5 w-6 h-20 bg-gradient-to-b from-purple-300/20 to-transparent animate-pulse"
-          style={{
-            transform: `translate(${mousePosition.x * 0.4}px, ${
-              mousePosition.y * 0.4
-            }px)`,
-            animationDelay: "1.5s",
-          }}
-        />
-        <div
-          className="absolute top-1/6 right-1/6 w-8 h-24 bg-gradient-to-b from-cyan-300/15 to-transparent animate-pulse-slow"
-          style={{
-            transform: `translate(${mousePosition.x * 0.3}px, ${
-              mousePosition.y * 0.3
-            }px)`,
-            animationDelay: "2.5s",
-          }}
-        />
+        /* Vignette to deepen edges without covering the stars */
+        #hero-section::after {
+          content: '';
+          position: absolute; inset: 0;
+          background: radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(2,1,10,0.55) 80%, rgba(2,1,10,0.88) 100%);
+          pointer-events: none;
+          z-index: 1;
+        }
 
-        {/* Grid patterns and lines */}
-        <div
-          className="absolute top-1/2 left-1/2 w-24 h-24 border border-gray-200/15 dark:border-gray-700/15 rotate-12 animate-pulse-slow"
-          style={{
-            transform: `translate(-50%, -50%) translate(${
-              mousePosition.x * -0.3
-            }px, ${mousePosition.y * -0.3}px) rotate(12deg)`,
-            animationDelay: "0.5s",
-          }}
-        />
-        <div
-          className="absolute top-1/4 left-2/3 w-20 h-20 border border-purple-200/10 dark:border-purple-700/10 rotate-45 animate-spin-slow"
-          style={{
-            transform: `translate(${mousePosition.x * 0.2}px, ${
-              mousePosition.y * 0.2
-            }px) rotate(45deg)`,
-            animationDelay: "4s",
-          }}
-        />
+        /* Scanlines */
+        .hero-scanlines {
+          position: absolute; inset: 0;
+          background: repeating-linear-gradient(
+            0deg, transparent, transparent 3px,
+            rgba(0,0,0,0.018) 3px, rgba(0,0,0,0.018) 4px
+          );
+          pointer-events: none; z-index: 2;
+        }
 
-        {/* Floating dots */}
-        <div
-          className="absolute top-1/3 left-1/4 w-3 h-3 bg-purple-400/30 rounded-full animate-bounce-slow"
-          style={{
-            transform: `translate(${mousePosition.x * 0.8}px, ${
-              mousePosition.y * 0.8
-            }px)`,
-            animationDelay: "0.8s",
-          }}
-        />
-        <div
-          className="absolute bottom-2/5 right-2/5 w-4 h-4 bg-blue-400/25 rounded-full animate-bounce-slow"
-          style={{
-            transform: `translate(${mousePosition.x * -0.7}px, ${
-              mousePosition.y * -0.7
-            }px)`,
-            animationDelay: "1.8s",
-          }}
-        />
-        <div
-          className="absolute top-3/5 left-1/5 w-2 h-2 bg-cyan-400/35 rounded-full animate-pulse"
-          style={{
-            transform: `translate(${mousePosition.x * 0.9}px, ${
-              mousePosition.y * 0.9
-            }px)`,
-            animationDelay: "2.2s",
-          }}
-        />
-      </div>
+        /* Content sits above vignette */
+        .hero-content {
+          position: relative; z-index: 10;
+          width: 100%; max-width: 1000px;
+          margin: 0 auto; padding: 0 24px;
+          display: flex; flex-direction: column;
+          align-items: center; text-align: center;
+        }
 
-      <motion.div
-        className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 text-center"
-        variants={container}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.6 }}
-      >
-        <motion.h1
-          variants={fadeUp}
-          className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight"
-        >
-          Shanjid{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 animate-gradient">
-            Ahmad
-          </span>
-        </motion.h1>
+        .hero-eyebrow {
+          font-size: 11px; font-weight: 400;
+          letter-spacing: 5px; text-transform: uppercase;
+          color: rgba(139,92,246,0.85);
+          margin-bottom: 20px;
+          display: flex; align-items: center; gap: 10px;
+        }
+        .hero-eyebrow::before,
+        .hero-eyebrow::after {
+          content: ''; display: block;
+          width: 28px; height: 1px;
+          background: rgba(139,92,246,0.4);
+        }
 
-        <motion.p
-          variants={fadeUp}
-          className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 mb-8 font-light"
-        >
-          Full-Stack Developer specializing in the MERN stack
-        </motion.p>
+        .hero-name {
+          font-family: 'Instrument Serif', serif;
+          font-size: clamp(56px, 10vw, 112px);
+          line-height: 1; color: #fff;
+          margin-bottom: 16px; letter-spacing: -2px;
+        }
+        .hero-name-accent {
+          font-style: italic;
+          background: linear-gradient(135deg, #a78bfa 0%, #818cf8 45%, #38bdf8 100%);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+          animation: hueShift 8s ease-in-out infinite;
+        }
+        @keyframes hueShift { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
 
-        <motion.p
-          variants={fadeUp}
-          className="text-lg text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed"
-        >
-          I build exceptional digital experiences with modern web technologies.
-          Passionate about clean code, user experience, and solving complex
-          problems.
-        </motion.p>
+        .hero-subtitle {
+          font-size: clamp(16px, 3vw, 22px); font-weight: 300;
+          color: rgba(200,200,230,0.7);
+          margin-bottom: 24px; height: 34px;
+          display: flex; align-items: center; justify-content: center;
+          letter-spacing: 0.3px;
+        }
+        .typewriter-wrap { display: inline-flex; align-items: center; gap: 2px; }
+        .cursor-blink {
+          display: inline-block; color: #a78bfa;
+          animation: blink 1s step-end infinite;
+          font-weight: 300; margin-left: 1px;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        {/* Enhanced Social Icons */}
+        .hero-desc {
+          font-size: clamp(14px, 2vw, 16px); font-weight: 300;
+          color: rgba(180,180,210,0.5); max-width: 480px;
+          line-height: 1.8; margin-bottom: 44px; letter-spacing: 0.1px;
+        }
+
+        .social-row { display: flex; gap: 14px; margin-bottom: 48px; }
+
+        .social-icon {
+          position: relative; display: flex; align-items: center; justify-content: center;
+          width: 46px; height: 46px; border-radius: 14px;
+          border: 1px solid rgba(139,92,246,0.2);
+          background: rgba(10,5,28,0.4);
+          backdrop-filter: blur(12px);
+          color: rgba(200,200,240,0.7); text-decoration: none;
+          transition: border-color 0.25s, color 0.25s, background 0.25s;
+          overflow: hidden;
+        }
+        .social-icon:hover {
+          border-color: rgba(139,92,246,0.55);
+          background: rgba(139,92,246,0.14);
+          color: #a78bfa;
+        }
+        .social-sheen {
+          position: absolute; inset: 0;
+          background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+          transform: translateX(-100%); transition: transform 0.5s ease;
+        }
+        .social-icon:hover .social-sheen { transform: translateX(100%); }
+        .social-tooltip {
+          position: absolute; bottom: calc(100% + 8px); left: 50%;
+          transform: translateX(-50%);
+          background: rgba(10,5,28,0.95); color: rgba(200,200,240,0.9);
+          font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+          padding: 5px 10px; border-radius: 6px;
+          border: 1px solid rgba(139,92,246,0.2);
+          pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap;
+        }
+        .social-icon:hover .social-tooltip { opacity: 1; }
+
+        .scroll-btn {
+          position: relative; width: 48px; height: 48px; border-radius: 50%;
+          border: 1px solid rgba(139,92,246,0.25);
+          background: rgba(10,5,28,0.35);
+          backdrop-filter: blur(12px);
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; color: rgba(200,200,240,0.5);
+          transition: border-color 0.25s, color 0.25s, background 0.25s;
+          overflow: hidden;
+        }
+        .scroll-btn:hover { border-color: rgba(139,92,246,0.6); color: #a78bfa; background: rgba(139,92,246,0.12); }
+        .scroll-btn::before {
+          content: ''; position: absolute; inset: -2px; border-radius: 50%;
+          border: 1px solid rgba(139,92,246,0.15);
+          animation: ringPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes ringPulse { 0%{transform:scale(1);opacity:.6} 100%{transform:scale(1.7);opacity:0} }
+        .scroll-btn svg { animation: arrowBounce 2s ease-in-out infinite; }
+        @keyframes arrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
+
+        .live-badge {
+          position: absolute; top: 28px; right: 28px; z-index: 20;
+          display: flex; align-items: center; gap: 7px;
+          padding: 7px 14px; border-radius: 100px;
+          border: 1px solid rgba(139,92,246,0.18);
+          background: rgba(10,5,28,0.5);
+          backdrop-filter: blur(12px);
+        }
+        .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; animation: dotPulse 2s ease-in-out infinite; }
+        @keyframes dotPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.5)} }
+        .live-text { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: rgba(167,139,250,0.6); }
+
+        .hero-statusbar {
+          position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+          display: flex; align-items: center; gap: 28px;
+          z-index: 20; opacity: 0; animation: fadeIn 0.7s ease 1.8s forwards;
+        }
+        .status-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .status-val {
+          font-family: 'Instrument Serif', serif; font-size: 28px;
+          background: linear-gradient(135deg, #a78bfa, #818cf8, #38bdf8);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+          line-height: 1;
+        }
+        .status-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: rgba(180,180,220,0.35); }
+        .status-divider { width: 1px; height: 36px; background: rgba(139,92,246,0.15); }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        @media (max-width: 640px) {
+          .hero-eyebrow { font-size: 10px; letter-spacing: 3px; }
+          .hero-eyebrow::before, .hero-eyebrow::after { width: 18px; }
+          .hero-desc { margin-bottom: 32px; }
+          .social-row { gap: 10px; margin-bottom: 36px; }
+          .social-icon { width: 42px; height: 42px; }
+          .live-badge { top: 16px; right: 16px; padding: 5px 10px; }
+          .hero-statusbar { gap: 16px; bottom: 20px; }
+          .status-val { font-size: 22px; }
+        }
+        @media (max-width: 380px) {
+          .status-item:nth-child(5) { display: none; }
+          .status-divider:nth-last-child(2) { display: none; }
+        }
+      `}</style>
+
+      <section id="hero-section">
+        {/* Subtle scanlines */}
+        <div className="hero-scanlines" />
+
+        {/* Live badge */}
         <motion.div
-          variants={fadeUp}
-          className="flex justify-center space-x-6 mb-16"
+          className="live-badge"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.5, duration: 0.6 }}
         >
-          {socialLinks.map((link, index) => {
-            const IconComponent = link.icon;
-            return (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative p-3 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-full border border-gray-200/50 dark:border-gray-700/50 hover:border-purple-300/50 dark:hover:border-purple-500/50 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/10 overflow-hidden"
-                aria-label={link.label}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <IconComponent className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors relative z-10" />
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full" />
-                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
-              </a>
-            );
-          })}
+          <div className="live-dot" />
+          <span className="live-text">Available</span>
         </motion.div>
 
-        {/* Enhanced Scroll Button */}
-        <motion.button
-          variants={fadeUp}
-          onClick={scrollToAbout}
-          className="group relative inline-flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-300/70 dark:border-gray-600/70 backdrop-blur-sm hover:border-purple-500 dark:hover:border-purple-400 transition-all duration-300 hover:scale-110 overflow-hidden"
-          aria-label="Scroll to about section"
-          type="button"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+        {/* Main content */}
+        <motion.div
+          className="hero-content"
+          variants={stagger}
+          initial="hidden"
+          animate="show"
         >
-          <span className="absolute inset-0 animate-ping bg-purple-500/10 rounded-full pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full" />
-          <ArrowDown className="relative z-10 w-5 h-5 text-gray-400 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors animate-bounce-subtle" />
-        </motion.button>
-      </motion.div>
-    </section>
+          <motion.div className="hero-eyebrow" variants={fadeUp}>
+            Portfolio 2025
+          </motion.div>
+
+          <motion.h1 className="hero-name" variants={fadeUp}>
+            Shanjid <span className="hero-name-accent">Ahmad</span>
+          </motion.h1>
+
+          <motion.div className="hero-subtitle" variants={fadeUp}>
+            <Typewriter />
+          </motion.div>
+
+          <motion.p className="hero-desc" variants={fadeUp}>
+            I build exceptional digital experiences with modern web
+            technologies. Passionate about clean code, thoughtful UX, and
+            solving complex problems.
+          </motion.p>
+
+          <motion.div className="social-row" variants={stagger}>
+            {socialLinks.map((link, i) => (
+              <SocialIcon key={link.label} {...link} index={i} />
+            ))}
+          </motion.div>
+
+          <motion.button
+            className="scroll-btn"
+            variants={fadeUp}
+            onClick={scrollToAbout}
+            aria-label="Scroll to about"
+            type="button"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.92 }}
+          >
+            <ArrowDown size={18} />
+          </motion.button>
+        </motion.div>
+
+        {/* Stats bar */}
+        <motion.div
+          className="hero-statusbar"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.6, duration: 0.8 }}
+        >
+          <div className="status-item">
+            <span className="status-val">2+</span>
+            <span className="status-label">Years</span>
+          </div>
+          <div className="status-divider" />
+          <div className="status-item">
+            <span className="status-val">30+</span>
+            <span className="status-label">Projects</span>
+          </div>
+          <div className="status-divider" />
+          <div className="status-item">
+            <span className="status-val">MERN</span>
+            <span className="status-label">Stack</span>
+          </div>
+          <div className="status-divider" />
+          <div className="status-item">
+            <span className="status-val">∞</span>
+            <span className="status-label">Curiosity</span>
+          </div>
+        </motion.div>
+      </section>
+    </>
   );
 };
 

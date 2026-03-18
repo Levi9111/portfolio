@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef } from "react";
 import { motion, useInView, Variants } from "framer-motion";
 import {
   Code,
@@ -43,7 +43,7 @@ const scaleIn: Variants = {
   show: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
@@ -123,22 +123,19 @@ const story = [
 
 // ─── Skill Tag ─────────────────────────────────────────────────────────────────
 
-const SkillTag: React.FC<{
-  label: string;
-  accent: string;
-  glow: string;
-  delay: number;
-}> = ({ label, accent, glow, delay }) => {
+const SkillTag: React.FC<{ label: string; accent: string; glow: string }> = ({
+  label,
+  accent,
+  glow,
+}) => {
   const [hovered, setHovered] = useState(false);
   return (
     <motion.span
       variants={scaleIn}
-      custom={delay}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       whileHover={{ scale: 1.08, y: -2 }}
       style={{
-        position: "relative",
         display: "inline-flex",
         alignItems: "center",
         padding: "6px 14px",
@@ -147,11 +144,11 @@ const SkillTag: React.FC<{
         fontWeight: 400,
         letterSpacing: "0.2px",
         cursor: "default",
-        border: `1px solid ${hovered ? accent + "55" : "rgba(255,255,255,0.07)"}`,
-        background: hovered ? glow : "rgba(255,255,255,0.03)",
+        border: `1px solid ${hovered ? accent + "55" : "rgba(255,255,255,0.08)"}`,
+        background: hovered ? glow : "rgba(255,255,255,0.04)",
         color: hovered ? accent : "rgba(200,200,230,0.6)",
         transition: "border-color 0.25s, background 0.25s, color 0.25s",
-        backdropFilter: "blur(6px)",
+        backdropFilter: "blur(10px)",
         boxShadow: hovered ? `0 0 18px ${glow}` : "none",
       }}
     >
@@ -181,14 +178,16 @@ const StatCard: React.FC<{
         position: "relative",
         padding: "32px 24px",
         borderRadius: 20,
-        border: `1px solid ${hovered ? accent + "44" : "rgba(255,255,255,0.06)"}`,
-        background: hovered
-          ? `radial-gradient(circle at 50% 0%, ${accent}10, rgba(255,255,255,0.02))`
-          : "rgba(255,255,255,0.025)",
-        backdropFilter: "blur(12px)",
         textAlign: "center",
-        transition: "border-color 0.3s, background 0.3s",
         cursor: "default",
+        // Glass over space — backdrop blur pulls in the star field
+        border: `1px solid ${hovered ? accent + "44" : "rgba(255,255,255,0.07)"}`,
+        background: hovered
+          ? `radial-gradient(circle at 50% 0%, ${accent}12, rgba(5,3,15,0.55))`
+          : "rgba(5,3,15,0.45)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        transition: "border-color 0.3s, background 0.3s",
         overflow: "hidden",
       }}
     >
@@ -205,14 +204,13 @@ const StatCard: React.FC<{
           transition: "opacity 0.3s",
         }}
       />
-
       <div
         style={{
           width: 56,
           height: 56,
           borderRadius: 16,
-          background: `${accent}15`,
-          border: `1px solid ${accent}25`,
+          background: `${accent}14`,
+          border: `1px solid ${accent}28`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -223,13 +221,11 @@ const StatCard: React.FC<{
       >
         <Icon size={24} color={accent} />
       </div>
-
       <div
         style={{
           fontFamily: "'Instrument Serif', serif",
           fontSize: 42,
           lineHeight: 1,
-          color: "#fff",
           marginBottom: 8,
           background: `linear-gradient(135deg, #fff, ${accent})`,
           WebkitBackgroundClip: "text",
@@ -257,24 +253,7 @@ const StatCard: React.FC<{
 
 const About = () => {
   const sectionRef = useRef<HTMLElement>(null);
-  const isInView = useInView(sectionRef, { once: true, margin: "-15%" });
-  const [relMouse, setRelMouse] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    const rect = sectionRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setRelMouse({
-      x: ((e.clientX - rect.left) / rect.width - 0.5) * 28,
-      y: ((e.clientY - rect.top) / rect.height - 0.5) * 28,
-    });
-  }, []);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    el.addEventListener("mousemove", handleMouseMove);
-    return () => el.removeEventListener("mousemove", handleMouseMove);
-  }, [handleMouseMove]);
+  const isInView = useInView(sectionRef, { once: true, margin: "-10%" });
 
   return (
     <>
@@ -284,230 +263,137 @@ const About = () => {
         #about-section {
           font-family: 'Outfit', sans-serif;
           position: relative;
-          padding: 120px 0 100px;
-          background: #07051a;
-          overflow: hidden;
+          padding: 140px 0 120px;
+          /* Fully transparent — SpaceBackground canvas shows through */
+          background: transparent;
+          overflow: visible;
         }
 
-        /* Separator line from hero */
+        /* Subtle top separator line */
         #about-section::before {
           content: '';
-          position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.3), transparent);
-        }
-
-        .about-grid-overlay {
-          position: absolute; inset: 0; pointer-events: none;
-          background-image:
-            linear-gradient(rgba(139,92,246,0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139,92,246,0.025) 1px, transparent 1px);
-          background-size: 60px 60px;
-        }
-
-        .about-vignette {
-          position: absolute; inset: 0; pointer-events: none;
-          background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(7,5,26,0.85) 100%);
-        }
-
-        .about-nebula {
-          position: absolute; border-radius: 50%;
-          filter: blur(80px); pointer-events: none;
+          position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.25), transparent);
+          pointer-events: none;
         }
 
         .about-eyebrow {
           display: inline-flex; align-items: center; gap: 10px;
           padding: 7px 16px; border-radius: 100px;
           border: 1px solid rgba(139,92,246,0.2);
-          background: rgba(139,92,246,0.06);
+          background: rgba(5,3,15,0.5);
+          backdrop-filter: blur(12px);
           font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
-          color: rgba(167,139,250,0.8);
-          margin-bottom: 20px;
+          color: rgba(167,139,250,0.85); margin-bottom: 20px;
         }
-
         .about-eyebrow::before {
-          content: ''; display: block;
-          width: 20px; height: 1px;
+          content: ''; display: block; width: 20px; height: 1px;
           background: rgba(139,92,246,0.5);
         }
 
         .about-title {
           font-family: 'Instrument Serif', serif;
           font-size: clamp(48px, 7vw, 80px);
-          line-height: 1.05; color: #fff;
-          letter-spacing: -1.5px;
-          margin-bottom: 0;
+          line-height: 1.05; color: #fff; letter-spacing: -1.5px;
         }
-
         .about-title-accent {
           font-style: italic;
           background: linear-gradient(135deg, #a78bfa 0%, #818cf8 45%, #38bdf8 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-          background-clip: text;
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+          animation: hueAbout 8s ease-in-out infinite;
         }
+        @keyframes hueAbout { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
 
         .about-divider {
           width: 64px; height: 1px; margin: 24px auto 0;
           background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent);
           position: relative;
         }
-
         .about-divider::after {
-          content: '';
-          position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
+          content: ''; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
           width: 4px; height: 4px; border-radius: 50%;
-          background: #a78bfa;
-          box-shadow: 0 0 8px #a78bfa;
+          background: #a78bfa; box-shadow: 0 0 8px #a78bfa;
         }
 
-        /* Story paragraphs */
         .story-item {
-          position: relative;
-          padding-left: 24px;
+          position: relative; padding-left: 24px;
           font-size: 15px; font-weight: 300;
-          color: rgba(190,190,220,0.55);
-          line-height: 1.85;
+          color: rgba(190,190,220,0.55); line-height: 1.85;
         }
-
         .story-dot {
           position: absolute; left: 0; top: 9px;
           width: 8px; height: 8px; border-radius: 50%;
         }
-
         .story-dot::after {
-          content: '';
-          position: absolute; inset: -4px; border-radius: 50%;
-          border: 1px solid currentColor;
-          opacity: 0.25;
+          content: ''; position: absolute; inset: -4px; border-radius: 50%;
+          border: 1px solid currentColor; opacity: 0.25;
           animation: dotring 2s ease-in-out infinite;
         }
+        @keyframes dotring { 0%,100%{transform:scale(1);opacity:.25} 50%{transform:scale(1.6);opacity:0} }
 
-        @keyframes dotring {
-          0%,100%{transform:scale(1);opacity:.25}
-          50%{transform:scale(1.6);opacity:0}
-        }
-
-        /* CTA Button */
         .about-cta {
-          position: relative;
-          display: inline-flex; align-items: center; gap: 10px;
+          position: relative; display: inline-flex; align-items: center; gap: 10px;
           padding: 14px 28px; border-radius: 14px;
           background: rgba(139,92,246,0.1);
           border: 1px solid rgba(139,92,246,0.3);
           color: rgba(200,180,255,0.9);
-          font-family: 'Outfit', sans-serif;
-          font-size: 14px; font-weight: 400; letter-spacing: 0.3px;
-          cursor: pointer;
+          font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 400;
+          cursor: default; overflow: hidden;
           transition: background 0.25s, border-color 0.25s, color 0.25s, transform 0.2s, box-shadow 0.25s;
-          overflow: hidden;
+          backdrop-filter: blur(12px);
         }
-
         .about-cta:hover {
-          background: rgba(139,92,246,0.2);
-          border-color: rgba(139,92,246,0.6);
-          color: #c4b5fd;
-          transform: translateY(-2px);
+          background: rgba(139,92,246,0.2); border-color: rgba(139,92,246,0.6);
+          color: #c4b5fd; transform: translateY(-2px);
           box-shadow: 0 8px 32px rgba(139,92,246,0.2);
         }
-
         .about-cta .sheen {
           position: absolute; inset: 0;
           background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.06) 50%, transparent 60%);
-          transform: translateX(-100%);
-          transition: transform 0.6s ease;
+          transform: translateX(-100%); transition: transform 0.6s ease;
         }
-
         .about-cta:hover .sheen { transform: translateX(100%); }
 
-        /* Skill group */
+        /* Skill group — glass panels floating over stars */
         .skill-group {
-          padding: 20px 24px;
-          border-radius: 18px;
-          border: 1px solid rgba(255,255,255,0.05);
-          background: rgba(255,255,255,0.02);
-          backdrop-filter: blur(8px);
+          padding: 20px 24px; border-radius: 18px;
+          border: 1px solid rgba(255,255,255,0.06);
+          background: rgba(5,3,15,0.42);
+          backdrop-filter: blur(14px);
+          WebkitBackdropFilter: blur(14px);
           transition: border-color 0.3s, background 0.3s;
         }
-
         .skill-group:hover {
-          border-color: rgba(255,255,255,0.08);
-          background: rgba(255,255,255,0.03);
+          border-color: rgba(255,255,255,0.1);
+          background: rgba(5,3,15,0.55);
         }
 
         .skill-cat-icon {
           width: 38px; height: 38px; border-radius: 10px;
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-
         .skill-cat-name {
           font-size: 13px; font-weight: 500;
           letter-spacing: 2px; text-transform: uppercase;
           color: rgba(200,200,240,0.5);
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
-          #about-section { padding: 80px 0 70px; }
-          .about-title { letter-spacing: -0.5px; }
+          #about-section { padding: 100px 0 80px; }
         }
       `}</style>
 
       <section id="about-section" ref={sectionRef}>
-        {/* Background layers */}
-        <div className="about-grid-overlay" />
-        <div className="about-vignette" />
-
-        {/* Nebula blobs */}
-        <div
-          className="about-nebula"
-          style={{
-            width: 480,
-            height: 480,
-            top: "-80px",
-            left: "-100px",
-            background:
-              "radial-gradient(circle, rgba(109,40,217,0.18), transparent 70%)",
-            transform: `translate(${relMouse.x * 0.4}px, ${relMouse.y * 0.4}px)`,
-            transition: "transform 0.1s ease-out",
-          }}
-        />
-        <div
-          className="about-nebula"
-          style={{
-            width: 400,
-            height: 400,
-            bottom: "-60px",
-            right: "-80px",
-            background:
-              "radial-gradient(circle, rgba(29,78,216,0.15), transparent 70%)",
-            transform: `translate(${relMouse.x * -0.3}px, ${relMouse.y * -0.3}px)`,
-            transition: "transform 0.1s ease-out",
-          }}
-        />
-        <div
-          className="about-nebula"
-          style={{
-            width: 300,
-            height: 300,
-            top: "40%",
-            right: "20%",
-            background:
-              "radial-gradient(circle, rgba(244,114,182,0.08), transparent 70%)",
-            transform: `translate(${relMouse.x * 0.5}px, ${relMouse.y * 0.5}px)`,
-            transition: "transform 0.1s ease-out",
-          }}
-        />
-
         <div
           style={{
             position: "relative",
-            zIndex: 10,
+            zIndex: 1,
             maxWidth: 1100,
             margin: "0 auto",
             padding: "0 24px",
           }}
         >
-          {/* ── Section Header ── */}
+          {/* ── Header ── */}
           <motion.div
             variants={stagger}
             initial="hidden"
@@ -542,7 +428,7 @@ const About = () => {
             ))}
           </motion.div>
 
-          {/* ── Two-Column Body ── */}
+          {/* ── Body ── */}
           <div
             style={{
               display: "grid",
@@ -551,7 +437,7 @@ const About = () => {
               alignItems: "start",
             }}
           >
-            {/* Left — Story */}
+            {/* Story */}
             <motion.div
               variants={stagger}
               initial="hidden"
@@ -565,15 +451,15 @@ const About = () => {
                   fontWeight: 400,
                   lineHeight: 1.2,
                   color: "#fff",
-                  marginBottom: 32,
                   letterSpacing: "-0.5px",
+                  marginBottom: 32,
                 }}
               >
                 Crafting Digital{" "}
                 <span
                   style={{
                     fontStyle: "italic",
-                    background: "linear-gradient(135deg, #a78bfa, #60a5fa)",
+                    background: "linear-gradient(135deg,#a78bfa,#60a5fa)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
@@ -634,7 +520,7 @@ const About = () => {
               </motion.div>
             </motion.div>
 
-            {/* Right — Skills */}
+            {/* Skills */}
             <motion.div
               variants={stagger}
               initial="hidden"
@@ -648,15 +534,15 @@ const About = () => {
                   fontWeight: 400,
                   lineHeight: 1.2,
                   color: "#fff",
-                  marginBottom: 28,
                   letterSpacing: "-0.5px",
+                  marginBottom: 28,
                 }}
               >
                 Skills &{" "}
                 <span
                   style={{
                     fontStyle: "italic",
-                    background: "linear-gradient(135deg, #34d399, #60a5fa)",
+                    background: "linear-gradient(135deg,#34d399,#60a5fa)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
@@ -670,7 +556,7 @@ const About = () => {
                 variants={stagger}
                 style={{ display: "flex", flexDirection: "column", gap: 14 }}
               >
-                {skills.map((group, gi) => {
+                {skills.map((group) => {
                   const Icon = group.icon;
                   return (
                     <motion.div
@@ -689,8 +575,8 @@ const About = () => {
                         <div
                           className="skill-cat-icon"
                           style={{
-                            background: `${group.accent}15`,
-                            border: `1px solid ${group.accent}30`,
+                            background: `${group.accent}14`,
+                            border: `1px solid ${group.accent}28`,
                           }}
                         >
                           <Icon size={18} color={group.accent} />
@@ -701,13 +587,12 @@ const About = () => {
                         variants={stagger}
                         style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
                       >
-                        {group.items.map((skill, si) => (
+                        {group.items.map((skill) => (
                           <SkillTag
                             key={skill}
                             label={skill}
                             accent={group.accent}
                             glow={group.glow}
-                            delay={gi * 0.1 + si * 0.04}
                           />
                         ))}
                       </motion.div>
