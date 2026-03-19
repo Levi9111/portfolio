@@ -1,4 +1,3 @@
-import { ThemeProvider } from "./contexts/ThemeContext";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import About from "./components/About";
@@ -9,7 +8,7 @@ import SpaceBackground from "./components/shared/SpaceBackground";
 
 function App() {
   return (
-    <ThemeProvider>
+    <>
       {/*
        * SpaceBackground sits fixed behind everything (z-index: 0).
        * All sections use transparent / semi-transparent backgrounds
@@ -30,7 +29,7 @@ function App() {
         </main>
         <Footer />
       </div>
-    </ThemeProvider>
+    </>
   );
 }
 
