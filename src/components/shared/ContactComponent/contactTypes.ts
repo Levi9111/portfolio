@@ -22,7 +22,7 @@ export interface SocialLink {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-export const PHONE_NUMBER = "01626974685";
+export const PHONE_NUMBER = "1626974685";
 export const EMAIL_ADDRESS = "shanjidahmad502@gmail.com";
 
 export const SOCIAL_LINKS: readonly SocialLink[] = [

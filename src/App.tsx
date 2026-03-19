@@ -9,11 +9,6 @@ import SpaceBackground from "./components/shared/SpaceBackground";
 function App() {
   return (
     <div className="overflow-x-hidden">
-      {/*
-       * SpaceBackground sits fixed behind everything (z-index: 0).
-       * All sections use transparent / semi-transparent backgrounds
-       * so the star field bleeds through continuously.
-       */}
       <SpaceBackground />
 
       <div
