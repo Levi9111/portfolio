@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { Heart, ArrowUp, Github, Linkedin, Mail, Code2 } from "lucide-react";
 import { motion, useInView, Variants } from "framer-motion";
 import TerminalWidget from "./shared/TerminalWidget";
@@ -72,6 +72,234 @@ const scaleIn: Variants = {
   },
 };
 
+// ─── Particle Constellation ───────────────────────────────────────────────────
+//
+//  Identical system to the Hero's constellation but tuned for the footer's
+//  darker, denser feel:
+//
+//    • 90 particles (fewer — footer is shorter than the hero)
+//    • Particles drift DOWNWARD (vy positive) so they feel like they're
+//      settling / sinking — different mood from the hero's upward drift
+//    • Connection distance 85px
+//    • Mouse attractor radius 130px
+//    • Slightly warmer accent mix — still purple/violet but includes pink
+//      to echo the heart icon and match the footer's softer tone
+//    • z-index 0 — sits behind the ::before separator line (pseudo) and
+//      all content (z:1)
+//
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  r: number;
+  baseAlpha: number;
+  life: number;
+  maxLife: number;
+  color: string;
+  isGlow: boolean;
+}
+
+const FOOTER_PARTICLE_COLORS = [
+  "139,92,246", // violet
+  "167,139,250", // lavender
+  "129,140,248", // indigo
+  "96,165,250", // blue
+  "244,114,182", // pink  (matches the heart icon)
+];
+
+const FooterParticles: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>(0);
+  const mouseRef = useRef({ x: -9999, y: -9999 });
+  const particles = useRef<Particle[]>([]);
+
+  const spawnParticle = useCallback(
+    (W: number, H: number, init = false): Particle => {
+      const color =
+        FOOTER_PARTICLE_COLORS[
+          Math.floor(Math.random() * FOOTER_PARTICLE_COLORS.length)
+        ];
+      return {
+        x: Math.random() * W,
+        // On init scatter through full height; on respawn appear at top
+        y: init ? Math.random() * H : -8,
+        vx: (Math.random() - 0.5) * 0.32,
+        vy: Math.random() * 0.4 + 0.1, // downward drift
+        r: Math.random() * 1.7 + 0.4,
+        baseAlpha: Math.random() * 0.5 + 0.18,
+        life: 0,
+        maxLife: Math.random() * 260 + 130,
+        color,
+        isGlow: Math.random() < 0.08,
+      };
+    },
+    [],
+  );
+
+  const onMouseMove = useCallback((e: MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }, []);
+
+  const onMouseLeave = useCallback(() => {
+    mouseRef.current = { x: -9999, y: -9999 };
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+
+    let W = 0,
+      H = 0;
+    const COUNT = 90;
+    const CONNECT_DIST = 85;
+    const ATTRACT_R = 130;
+    const ATTRACT_FORCE = 0.016;
+
+    const resize = () => {
+      W = canvas.width = canvas.offsetWidth;
+      H = canvas.height = canvas.offsetHeight;
+      particles.current = Array.from({ length: COUNT }, () =>
+        spawnParticle(W, H, true),
+      );
+    };
+
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    const footer = canvas.closest("#footer-section") as HTMLElement | null;
+    footer?.addEventListener("mousemove", onMouseMove);
+    footer?.addEventListener("mouseleave", onMouseLeave);
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      const mx = mouseRef.current.x;
+      const my = mouseRef.current.y;
+      const ps = particles.current;
+
+      // 1. update
+      for (let i = 0; i < ps.length; i++) {
+        const p = ps[i];
+
+        // Mouse attraction
+        const dx = mx - p.x,
+          dy = my - p.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < ATTRACT_R && d > 1) {
+          const f = ((ATTRACT_R - d) / ATTRACT_R) * ATTRACT_FORCE;
+          p.vx += (dx / d) * f;
+          p.vy += (dy / d) * f;
+        }
+
+        p.vx *= 0.97;
+        p.vy *= 0.97;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life++;
+
+        if (p.life > p.maxLife || p.y > H + 12) {
+          ps[i] = spawnParticle(W, H, false);
+        }
+      }
+
+      // 2. edges
+      for (let i = 0; i < ps.length; i++) {
+        for (let j = i + 1; j < ps.length; j++) {
+          const dx = ps[i].x - ps[j].x,
+            dy = ps[i].y - ps[j].y;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < CONNECT_DIST) {
+            const li =
+              Math.min(ps[i].life / 40, 1) *
+              Math.min(
+                1 - Math.max(0, (ps[i].life - ps[i].maxLife + 40) / 40),
+                1,
+              );
+            const lj =
+              Math.min(ps[j].life / 40, 1) *
+              Math.min(
+                1 - Math.max(0, (ps[j].life - ps[j].maxLife + 40) / 40),
+                1,
+              );
+            const alpha = (1 - d / CONNECT_DIST) * 0.16 * Math.min(li, lj);
+            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = "rgba(167,139,250,1)";
+            ctx.lineWidth = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(ps[i].x, ps[i].y);
+            ctx.lineTo(ps[j].x, ps[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 3. particles
+      for (let i = 0; i < ps.length; i++) {
+        const p = ps[i];
+        const fadeIn = Math.min(p.life / 40, 1);
+        const fadeOut = Math.min(
+          1 - Math.max(0, (p.life - p.maxLife + 40) / 40),
+          1,
+        );
+        const alpha = fadeIn * fadeOut * p.baseAlpha;
+
+        if (p.isGlow) {
+          const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 5);
+          grd.addColorStop(0, `rgba(${p.color},${(alpha * 0.85).toFixed(3)})`);
+          grd.addColorStop(
+            0.4,
+            `rgba(${p.color},${(alpha * 0.28).toFixed(3)})`,
+          );
+          grd.addColorStop(1, `rgba(${p.color},0)`);
+          ctx.fillStyle = grd;
+          ctx.globalAlpha = 1;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r * 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = `rgba(${p.color},1)`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+      animRef.current = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      ro.disconnect();
+      footer?.removeEventListener("mousemove", onMouseMove);
+      footer?.removeEventListener("mouseleave", onMouseLeave);
+    };
+  }, [spawnParticle, onMouseMove, onMouseLeave]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 0,
+        pointerEvents: "none",
+      }}
+    />
+  );
+};
+
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
 const Footer: React.FC = () => {
@@ -89,29 +317,26 @@ const Footer: React.FC = () => {
           font-family: 'Outfit', sans-serif;
           position: relative;
           background: transparent;
-          overflow: visible;
+          overflow: hidden;
           padding: 80px 0 40px;
         }
 
-        /* Top separator */
+        /* Top separator — z:1 so it sits above the canvas */
         #footer-section::before {
           content: '';
           position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
           background: linear-gradient(90deg, transparent, rgba(139,92,246,0.25), transparent);
-          pointer-events: none;
+          pointer-events: none; z-index: 1;
         }
 
-        /* Terminal cursor blink */
-        @keyframes cursorBlink  { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes colonBlink   { 0%,100%{opacity:1} 50%{opacity:0.2} }
+        @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes colonBlink  { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-        /* Scroll-to-top button pulse ring */
         @keyframes scrollPulse {
           0%   { transform: scale(1); opacity: 0.6; }
           100% { transform: scale(1.8); opacity: 0; }
         }
 
-        /* Heartbeat */
         @keyframes heartbeat {
           0%,100% { transform: scale(1); }
           14%     { transform: scale(1.3); }
@@ -120,7 +345,6 @@ const Footer: React.FC = () => {
           56%     { transform: scale(1); }
         }
 
-        /* Social icon tooltip */
         .footer-social:hover .footer-tooltip { opacity: 1; transform: translateX(-50%) translateY(-4px); }
         .footer-tooltip {
           position: absolute; bottom: calc(100% + 8px); left: 50%;
@@ -135,7 +359,6 @@ const Footer: React.FC = () => {
           font-family: 'DM Sans', sans-serif;
         }
 
-        /* Tech badge */
         .footer-badge {
           display: inline-flex; align-items: center; gap: 6px;
           padding: 5px 12px; border-radius: 100px;
@@ -155,6 +378,9 @@ const Footer: React.FC = () => {
       `}</style>
 
       <footer id="footer-section" ref={footerRef}>
+        {/* Particle constellation — z:0, behind everything */}
+        <FooterParticles />
+
         <div
           style={{
             position: "relative",
@@ -224,7 +450,6 @@ const Footer: React.FC = () => {
                   el.style.background = "rgba(139,92,246,0.07)";
                 }}
               >
-                {/* Pulse ring */}
                 <div
                   style={{
                     position: "absolute",
@@ -350,7 +575,7 @@ const Footer: React.FC = () => {
               />
             </motion.div>
 
-            {/* ── Bottom row: copyright + tech badges ── */}
+            {/* ── Bottom row ── */}
             <motion.div
               variants={stagger}
               style={{
@@ -363,7 +588,6 @@ const Footer: React.FC = () => {
               }}
               className="footer-bottom"
             >
-              {/* Copyright */}
               <motion.p
                 variants={fadeUp}
                 style={{
@@ -375,7 +599,6 @@ const Footer: React.FC = () => {
                 © 2026 Shanjid Ahmad. All rights reserved.
               </motion.p>
 
-              {/* Made with */}
               <motion.p
                 variants={fadeUp}
                 style={{
@@ -401,7 +624,6 @@ const Footer: React.FC = () => {
                 using React & Tailwind
               </motion.p>
 
-              {/* Tech badges */}
               <motion.div
                 variants={stagger}
                 style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
@@ -435,11 +657,7 @@ const Footer: React.FC = () => {
 
         <style>{`
           @media (max-width: 640px) {
-            .footer-bottom {
-              flex-direction: column !important;
-              align-items: center !important;
-              text-align: center;
-            }
+            .footer-bottom { flex-direction: column !important; align-items: center !important; text-align: center; }
           }
         `}</style>
       </footer>

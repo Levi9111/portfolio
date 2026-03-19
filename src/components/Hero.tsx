@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Github, Linkedin, Mail, ArrowDown } from "lucide-react";
 import { motion, Variants } from "framer-motion";
 import VSCodeWidget from "./shared/VScodeWidget";
@@ -79,6 +79,235 @@ const fadeRight: Variants = {
     filter: "blur(0px)",
     transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
   },
+};
+
+// ─── Particle Constellation ───────────────────────────────────────────────────
+//
+//  Canvas sits at z-index 3 — above scanlines (z:2), below content (z:10).
+//  Particles drift upward slowly; nearby ones get connected by fading edges.
+//  Mouse creates a local attractor: particles within 140px are gently pulled
+//  toward the cursor, tightening the constellation in that region.
+//  Accent colours match the hero's purple/violet/blue palette.
+//
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  r: number;
+  baseAlpha: number;
+  life: number;
+  maxLife: number;
+  color: string;
+  isGlow: boolean; // extra bloom on ~8% of particles
+}
+
+const PARTICLE_COLORS = [
+  "139,92,246", // violet  (primary)
+  "129,140,248", // indigo
+  "96,165,250", // blue
+  "167,139,250", // lavender
+  "216,180,254", // soft purple
+];
+
+const ParticleConstellation: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>(0);
+  const mouseRef = useRef({ x: -9999, y: -9999 });
+  const particles = useRef<Particle[]>([]);
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+  const spawnParticle = useCallback(
+    (W: number, H: number, init = false): Particle => {
+      const colorRgb =
+        PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)];
+      return {
+        x: Math.random() * W,
+        y: init ? Math.random() * H : H + 8,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: -(Math.random() * 0.45 + 0.12), // always drift upward
+        r: Math.random() * 1.8 + 0.4,
+        baseAlpha: Math.random() * 0.55 + 0.2,
+        life: 0,
+        maxLife: Math.random() * 280 + 140,
+        color: colorRgb,
+        isGlow: Math.random() < 0.08,
+      };
+    },
+    [],
+  );
+
+  // ── mouse ─────────────────────────────────────────────────────────────────
+  const onMouseMove = useCallback((e: MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }, []);
+
+  const onMouseLeave = useCallback(() => {
+    mouseRef.current = { x: -9999, y: -9999 };
+  }, []);
+
+  // ── main effect ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+
+    let W = 0,
+      H = 0;
+    const PARTICLE_COUNT = 110;
+    const CONNECT_DIST = 90; // px — max edge length
+    const ATTRACT_RADIUS = 140; // px — mouse pull zone
+    const ATTRACT_FORCE = 0.018;
+
+    const resize = () => {
+      W = canvas.width = canvas.offsetWidth;
+      H = canvas.height = canvas.offsetHeight;
+      // Re-seed on resize
+      particles.current = Array.from({ length: PARTICLE_COUNT }, () =>
+        spawnParticle(W, H, true),
+      );
+    };
+
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    const section = canvas.closest("#hero-section") as HTMLElement | null;
+    section?.addEventListener("mousemove", onMouseMove);
+    section?.addEventListener("mouseleave", onMouseLeave);
+
+    // ── draw loop ─────────────────────────────────────────────────────────
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      const mx = mouseRef.current.x;
+      const my = mouseRef.current.y;
+      const ps = particles.current;
+
+      // 1. update positions
+      for (let i = 0; i < ps.length; i++) {
+        const p = ps[i];
+
+        // Mouse attraction
+        const dx = mx - p.x;
+        const dy = my - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < ATTRACT_RADIUS && dist > 1) {
+          const force =
+            ((ATTRACT_RADIUS - dist) / ATTRACT_RADIUS) * ATTRACT_FORCE;
+          p.vx += (dx / dist) * force;
+          p.vy += (dy / dist) * force;
+        }
+
+        // Damping so velocity doesn't explode
+        p.vx *= 0.97;
+        p.vy *= 0.97;
+
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life++;
+
+        // Respawn when life ends or particle escapes top
+        if (p.life > p.maxLife || p.y < -12) {
+          ps[i] = spawnParticle(W, H, false);
+        }
+      }
+
+      // 2. draw edges between close particles
+      for (let i = 0; i < ps.length; i++) {
+        for (let j = i + 1; j < ps.length; j++) {
+          const dx = ps[i].x - ps[j].x;
+          const dy = ps[i].y - ps[j].y;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < CONNECT_DIST) {
+            // Fade edge as distance grows; also fade by both particles' life
+            const lifeAlpha = Math.min(
+              Math.min(ps[i].life / 40, 1) *
+                Math.min(
+                  1 - Math.max(0, (ps[i].life - ps[i].maxLife + 40) / 40),
+                  1,
+                ),
+              Math.min(ps[j].life / 40, 1) *
+                Math.min(
+                  1 - Math.max(0, (ps[j].life - ps[j].maxLife + 40) / 40),
+                  1,
+                ),
+            );
+            const alpha = (1 - d / CONNECT_DIST) * 0.18 * lifeAlpha;
+
+            // Edge colour: blend between the two particle colours
+            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = `rgba(167,139,250,1)`; // lavender mid-tone
+            ctx.lineWidth = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(ps[i].x, ps[i].y);
+            ctx.lineTo(ps[j].x, ps[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 3. draw particles
+      for (let i = 0; i < ps.length; i++) {
+        const p = ps[i];
+        const fadeIn = Math.min(p.life / 40, 1);
+        const fadeOut = Math.min(
+          1 - Math.max(0, (p.life - p.maxLife + 40) / 40),
+          1,
+        );
+        const alpha = fadeIn * fadeOut * p.baseAlpha;
+
+        if (p.isGlow) {
+          // Bloom ring
+          const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 5);
+          grd.addColorStop(0, `rgba(${p.color},${(alpha * 0.9).toFixed(3)})`);
+          grd.addColorStop(0.4, `rgba(${p.color},${(alpha * 0.3).toFixed(3)})`);
+          grd.addColorStop(1, `rgba(${p.color},0)`);
+          ctx.fillStyle = grd;
+          ctx.globalAlpha = 1;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r * 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Solid core dot
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = `rgba(${p.color},1)`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+      animRef.current = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      ro.disconnect();
+      section?.removeEventListener("mousemove", onMouseMove);
+      section?.removeEventListener("mouseleave", onMouseLeave);
+    };
+  }, [spawnParticle, onMouseMove, onMouseLeave]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 3, // above scanlines (z:2), below content (z:10)
+        pointerEvents: "none",
+      }}
+    />
+  );
 };
 
 // ─── Typewriter ───────────────────────────────────────────────────────────────
@@ -185,20 +414,17 @@ const SocialIcon: React.FC<SocialIconProps> = ({
     }}
   >
     <Icon size={18} />
-    {/* Sheen */}
     <span
       style={{
         position: "absolute",
         inset: 0,
-        background:
-          "linear-gradient(135deg, rgba(255,255,255,0.1), transparent)",
+        background: "linear-gradient(135deg,rgba(255,255,255,0.1),transparent)",
         transform: "translateX(-100%)",
         transition: "transform 0.5s ease",
         pointerEvents: "none",
       }}
       className="hero-social-sheen"
     />
-    {/* Tooltip */}
     <span
       style={{
         position: "absolute",
@@ -251,7 +477,6 @@ const Hero: React.FC = () => {
           padding: 100px 0 80px;
         }
 
-        /* Vignette — deepens edges, stars still visible */
         #hero-section::after {
           content: '';
           position: absolute; inset: 0;
@@ -259,17 +484,20 @@ const Hero: React.FC = () => {
           pointer-events: none; z-index: 1;
         }
 
-        /* Scanlines */
         .hero-scanlines {
           position: absolute; inset: 0;
-          background: repeating-linear-gradient(
-            0deg, transparent, transparent 3px,
-            rgba(0,0,0,0.016) 3px, rgba(0,0,0,0.016) 4px
-          );
+          background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.016) 3px, rgba(0,0,0,0.016) 4px);
           pointer-events: none; z-index: 2;
         }
 
-        /* Two-column layout */
+        /* z-index ladder:
+           0  SpaceBackground (fixed canvas, App-level)
+           1  #hero-section::after vignette
+           2  .hero-scanlines
+           3  ParticleConstellation canvas       ← NEW
+           10 .hero-inner (all content)
+        */
+
         .hero-inner {
           position: relative; z-index: 10;
           width: 100%; max-width: 1200px;
@@ -280,7 +508,6 @@ const Hero: React.FC = () => {
           align-items: center;
         }
 
-        /* ── Left column ── */
         .hero-left { display: flex; flex-direction: column; align-items: flex-start; }
 
         .hero-eyebrow {
@@ -304,84 +531,55 @@ const Hero: React.FC = () => {
           letter-spacing: -2px;
           margin-bottom: 18px;
         }
-        .hero-name-first {
-          display: block;
-          color: rgba(255,255,255,0.92);
-        }
+        .hero-name-first { display: block; color: rgba(255,255,255,0.92); }
         .hero-name-last {
-          display: block;
-          font-style: italic;
+          display: block; font-style: italic;
           background: linear-gradient(135deg, #a78bfa 0%, #818cf8 45%, #38bdf8 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
           animation: heroHue 8s ease-in-out infinite;
         }
         @keyframes heroHue { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
 
         .hero-subtitle {
-          font-size: clamp(15px, 2.2vw, 19px);
-          font-weight: 300;
-          color: rgba(200,200,230,0.6);
-          margin-bottom: 20px;
-          height: 30px;
-          display: flex; align-items: center;
-          letter-spacing: 0.2px;
+          font-size: clamp(15px, 2.2vw, 19px); font-weight: 300;
+          color: rgba(200,200,230,0.6); margin-bottom: 20px;
+          height: 30px; display: flex; align-items: center; letter-spacing: 0.2px;
         }
         @keyframes heroCursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        /* Separator line */
         .hero-sep {
           width: 48px; height: 1px;
           background: linear-gradient(90deg, rgba(139,92,246,0.6), transparent);
-          margin-bottom: 20px;
-          position: relative;
+          margin-bottom: 20px; position: relative;
         }
         .hero-sep::before {
-          content: ''; position: absolute;
-          left: 0; top: -2px;
+          content: ''; position: absolute; left: 0; top: -2px;
           width: 4px; height: 4px; border-radius: 50%;
           background: #a78bfa; box-shadow: 0 0 6px #a78bfa;
         }
 
         .hero-desc {
-          font-size: clamp(13px, 1.6vw, 15px);
-          font-weight: 300;
-          color: rgba(180,180,215,0.48);
-          max-width: 420px;
-          line-height: 1.85;
-          margin-bottom: 36px;
-          letter-spacing: 0.1px;
+          font-size: clamp(13px, 1.6vw, 15px); font-weight: 300;
+          color: rgba(180,180,215,0.48); max-width: 420px;
+          line-height: 1.85; margin-bottom: 36px; letter-spacing: 0.1px;
         }
 
-        /* Social + scroll row */
-        .hero-actions {
-          display: flex; align-items: center;
-          gap: 24px; flex-wrap: wrap;
-        }
+        .hero-actions { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
         .social-row { display: flex; gap: 10px; }
 
         .hero-social-sheen { pointer-events: none; }
         a:hover .hero-social-sheen { transform: translateX(100%) !important; }
         a:hover .hero-social-tip   { opacity: 1 !important; }
 
-        /* Scroll button */
         .scroll-btn {
-          position: relative;
-          width: 46px; height: 46px; border-radius: 50%;
-          border: 1px solid rgba(139,92,246,0.25);
-          background: rgba(10,5,28,0.35);
-          backdrop-filter: blur(12px);
-          display: flex; align-items: center; justify-content: center;
+          position: relative; width: 46px; height: 46px; border-radius: 50%;
+          border: 1px solid rgba(139,92,246,0.25); background: rgba(10,5,28,0.35);
+          backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center;
           cursor: pointer; color: rgba(200,200,240,0.5);
           transition: border-color 0.25s, color 0.25s, background 0.25s;
           overflow: visible; flex-shrink: 0;
         }
-        .scroll-btn:hover {
-          border-color: rgba(139,92,246,0.55);
-          color: #a78bfa;
-          background: rgba(139,92,246,0.1);
-        }
+        .scroll-btn:hover { border-color: rgba(139,92,246,0.55); color: #a78bfa; background: rgba(139,92,246,0.1); }
         .scroll-btn::before {
           content: ''; position: absolute; inset: -3px; border-radius: 50%;
           border: 1px solid rgba(139,92,246,0.15);
@@ -391,51 +589,24 @@ const Hero: React.FC = () => {
         .scroll-btn svg { animation: heroBounce 2s ease-in-out infinite; }
         @keyframes heroBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
 
-        /* ── Stats bar (bottom of left col) ── */
         .hero-stats {
-          display: flex; align-items: center;
-          gap: 0; margin-top: 40px;
-          padding: 16px 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
-          width: 100%;
+          display: flex; align-items: center; gap: 0; margin-top: 40px;
+          padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.05); width: 100%;
         }
-        .hero-stat {
-          flex: 1; display: flex; flex-direction: column;
-          align-items: center; gap: 5px;
-          padding: 0 8px;
-        }
+        .hero-stat { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 0 8px; }
         .hero-stat:not(:last-child) { border-right: 1px solid rgba(139,92,246,0.12); }
         .stat-val {
-          font-family: 'Syne', sans-serif;
-          font-size: clamp(20px, 3vw, 28px);
-          font-weight: 800;
+          font-family: 'Syne', sans-serif; font-size: clamp(20px, 3vw, 28px); font-weight: 800;
           background: linear-gradient(135deg, #fff, #a78bfa);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
           line-height: 1; letter-spacing: -0.03em;
         }
-        .stat-label {
-          font-size: 9px; letter-spacing: 2.5px;
-          text-transform: uppercase;
-          color: rgba(180,180,220,0.32);
-          font-family: 'DM Sans', sans-serif;
-        }
+        .stat-label { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(180,180,220,0.32); font-family: 'DM Sans', sans-serif; }
 
-        /* ── Right column ── */
-        .hero-right {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
+        .hero-right { display: flex; justify-content: center; align-items: center; }
 
-        /* ── Responsive ── */
         @media (max-width: 900px) {
-          .hero-inner {
-            grid-template-columns: 1fr !important;
-            gap: 48px;
-            text-align: center;
-          }
+          .hero-inner { grid-template-columns: 1fr !important; gap: 48px; text-align: center; }
           .hero-left { align-items: center; }
           .hero-eyebrow { justify-content: center; }
           .hero-eyebrow::before { display: none; }
@@ -452,8 +623,13 @@ const Hero: React.FC = () => {
       `}</style>
 
       <section id="hero-section">
+        {/* z:2 — scanlines */}
         <div className="hero-scanlines" />
 
+        {/* z:3 — particle constellation (above scanlines, below content) */}
+        <ParticleConstellation />
+
+        {/* z:10 — all content */}
         <div className="hero-inner">
           {/* ── LEFT COLUMN ── */}
           <motion.div
@@ -462,26 +638,21 @@ const Hero: React.FC = () => {
             initial="hidden"
             animate="show"
           >
-            {/* Eyebrow */}
             <motion.div className="hero-eyebrow" variants={fadeUp}>
               Portfolio · 2026
             </motion.div>
 
-            {/* Name */}
             <motion.h1 className="hero-name" variants={fadeUp}>
               <span className="hero-name-first">Shanjid</span>
               <span className="hero-name-last">Ahmad</span>
             </motion.h1>
 
-            {/* Typewriter role */}
             <motion.div className="hero-subtitle" variants={fadeUp}>
               <Typewriter />
             </motion.div>
 
-            {/* Separator */}
             <motion.div className="hero-sep" variants={fadeUp} />
 
-            {/* Description */}
             <motion.p className="hero-desc" variants={fadeUp}>
               I architect and ship full-stack web products — from API design to
               pixel-perfect interfaces. Five years of turning ideas into
@@ -489,7 +660,6 @@ const Hero: React.FC = () => {
               TypeScript.
             </motion.p>
 
-            {/* Social icons + scroll btn */}
             <motion.div className="hero-actions" variants={stagger}>
               <div className="social-row">
                 {SOCIAL_LINKS.map((link) => (
@@ -510,7 +680,6 @@ const Hero: React.FC = () => {
               </motion.button>
             </motion.div>
 
-            {/* Stats */}
             <motion.div
               className="hero-stats"
               initial={{ opacity: 0, y: 16 }}
@@ -530,7 +699,7 @@ const Hero: React.FC = () => {
             </motion.div>
           </motion.div>
 
-          {/* ── RIGHT COLUMN — VS Code widget ── */}
+          {/* ── RIGHT COLUMN ── */}
           <motion.div
             className="hero-right"
             variants={fadeRight}
