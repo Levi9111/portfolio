@@ -13,7 +13,7 @@ import {
   Globe,
   Star,
 } from "lucide-react";
-import ActivityWidget from "./shared/ActivityWidget";
+// import ActivityWidget from "./shared/ActivityWidget";
 import DevDashboard from "./shared/DevDashboard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

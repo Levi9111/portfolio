@@ -9,7 +9,8 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { motion, useInView, Variants } from "framer-motion";
-import ProjectsWidget from "./shared/ProjectsWidget";
+// import ProjectsWidget from "./shared/ProjectsWidget";
+import DevProcess from "./shared/DevProcess";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1261,8 +1262,8 @@ const Projects: React.FC = () => {
             className="proj-layout"
           >
             {/* Widget on the left */}
-            <ProjectsWidget />
-
+            {/* <ProjectsWidget /> */}
+            <DevProcess />
             {/* Project cards on the right */}
             <motion.div
               variants={stagger}

@@ -464,7 +464,7 @@ const Hero: React.FC = () => {
           >
             {/* Eyebrow */}
             <motion.div className="hero-eyebrow" variants={fadeUp}>
-              Portfolio · 2025
+              Portfolio · 2026
             </motion.div>
 
             {/* Name */}
