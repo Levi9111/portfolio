@@ -1,16 +1,68 @@
 import React, { useState, useEffect } from "react";
 import { Github, Linkedin, Mail, ArrowDown } from "lucide-react";
 import { motion, Variants } from "framer-motion";
+import VSCodeWidget from "./shared/VScodeWidget";
 
-// ─── Variants ──────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface SocialLink {
+  readonly href: string;
+  readonly icon: React.ElementType;
+  readonly label: string;
+  readonly accent: string;
+}
+
+interface StatItem {
+  readonly value: string;
+  readonly label: string;
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
+const SOCIAL_LINKS: readonly SocialLink[] = [
+  {
+    href: "https://github.com/levi9111",
+    icon: Github,
+    label: "GitHub",
+    accent: "#e2e8f0",
+  },
+  {
+    href: "https://www.linkedin.com/in/shanjid-ahmad-b77b5427b",
+    icon: Linkedin,
+    label: "LinkedIn",
+    accent: "#60a5fa",
+  },
+  {
+    href: "mailto:shanjidahmad502@gmail.com",
+    icon: Mail,
+    label: "Email",
+    accent: "#a78bfa",
+  },
+] as const;
+
+const TITLES: readonly string[] = [
+  "Full-Stack Developer",
+  "MERN Stack Engineer",
+  "Next.js Specialist",
+  "UI/UX Craftsman",
+] as const;
+
+const STATS: readonly StatItem[] = [
+  { value: "5+", label: "Years" },
+  { value: "60+", label: "Projects" },
+  { value: "MERN", label: "Stack" },
+  { value: "∞", label: "Curiosity" },
+] as const;
+
+// ─── Variants ─────────────────────────────────────────────────────────────────
 
 const stagger: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.15, delayChildren: 0.2 } },
+  show: { transition: { staggerChildren: 0.13, delayChildren: 0.15 } },
 };
 
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 40, filter: "blur(8px)" },
+  hidden: { opacity: 0, y: 36, filter: "blur(8px)" },
   show: {
     opacity: 1,
     y: 0,
@@ -19,110 +71,174 @@ const fadeUp: Variants = {
   },
 };
 
-const slideIn: Variants = {
-  hidden: { opacity: 0, x: -30 },
+const fadeRight: Variants = {
+  hidden: { opacity: 0, x: 28, filter: "blur(6px)" },
   show: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
+    filter: "blur(0px)",
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
-
-const socialLinks = [
-  { href: "https://github.com/levi9111", icon: Github, label: "GitHub" },
-  {
-    href: "https://www.linkedin.com/in/shanjid-ahmad-b77b5427b",
-    icon: Linkedin,
-    label: "LinkedIn",
-  },
-  { href: "mailto:shanjidahmad502@gmail.com", icon: Mail, label: "Email" },
-];
-
-const TITLES = [
-  "Full-Stack Developer",
-  "MERN Stack Engineer",
-  "UI/UX Craftsman",
-  "Problem Solver",
-];
-
-// ─── Typewriter ────────────────────────────────────────────────────────────────
+// ─── Typewriter ───────────────────────────────────────────────────────────────
 
 const Typewriter: React.FC = () => {
-  const [titleIndex, setTitleIndex] = useState(0);
+  const [index, setIndex] = useState(0);
   const [displayed, setDisplayed] = useState("");
   const [phase, setPhase] = useState<"typing" | "pause" | "erasing">("typing");
 
   useEffect(() => {
-    const current = TITLES[titleIndex];
-    let timeout: ReturnType<typeof setTimeout>;
+    const current = TITLES[index];
+    let t: ReturnType<typeof setTimeout>;
+
     if (phase === "typing") {
       if (displayed.length < current.length) {
-        timeout = setTimeout(
+        t = setTimeout(
           () => setDisplayed(current.slice(0, displayed.length + 1)),
-          55,
+          52,
         );
       } else {
-        timeout = setTimeout(() => setPhase("pause"), 1800);
+        t = setTimeout(() => setPhase("pause"), 1900);
       }
     } else if (phase === "pause") {
-      timeout = setTimeout(() => setPhase("erasing"), 400);
+      t = setTimeout(() => setPhase("erasing"), 380);
     } else {
       if (displayed.length > 0) {
-        timeout = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 30);
+        t = setTimeout(() => setDisplayed((d) => d.slice(0, -1)), 28);
       } else {
-        setTitleIndex((i) => (i + 1) % TITLES.length);
+        setIndex((i) => (i + 1) % TITLES.length);
         setPhase("typing");
       }
     }
-    return () => clearTimeout(timeout);
-  }, [displayed, phase, titleIndex]);
+    return () => clearTimeout(t);
+  }, [displayed, phase, index]);
 
   return (
-    <span className="typewriter-wrap">
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
       {displayed}
-      <span className="cursor-blink">|</span>
+      <span
+        style={{
+          display: "inline-block",
+          color: "#a78bfa",
+          animation: "heroCursorBlink 1s step-end infinite",
+          fontWeight: 300,
+          marginLeft: 1,
+        }}
+      >
+        |
+      </span>
     </span>
   );
 };
 
-// ─── Social Icon ────────────────────────────────────────────────────────────────
+// ─── Social Icon ──────────────────────────────────────────────────────────────
 
-const SocialIcon: React.FC<{
+interface SocialIconProps {
   href: string;
   icon: React.ElementType;
   label: string;
-  index: number;
-}> = ({ href, icon: Icon, label, index }) => (
+  accent: string;
+}
+
+const SocialIcon: React.FC<SocialIconProps> = ({
+  href,
+  icon: Icon,
+  label,
+  accent,
+}) => (
   <motion.a
     href={href}
     target="_blank"
     rel="noopener noreferrer"
     aria-label={label}
-    className="social-icon"
-    variants={slideIn}
-    custom={index}
+    variants={fadeUp}
     whileHover={{ scale: 1.12, y: -3 }}
     whileTap={{ scale: 0.92 }}
+    style={{
+      position: "relative",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: 46,
+      height: 46,
+      borderRadius: 14,
+      border: "1px solid rgba(139,92,246,0.2)",
+      background: "rgba(10,5,28,0.4)",
+      backdropFilter: "blur(12px)",
+      color: "rgba(200,200,240,0.7)",
+      textDecoration: "none",
+      overflow: "hidden",
+      transition: "border-color 0.25s, color 0.25s, background 0.25s",
+    }}
+    onMouseEnter={(e) => {
+      const el = e.currentTarget as HTMLElement;
+      el.style.borderColor = `${accent}55`;
+      el.style.color = accent;
+      el.style.background = `${accent}14`;
+    }}
+    onMouseLeave={(e) => {
+      const el = e.currentTarget as HTMLElement;
+      el.style.borderColor = "rgba(139,92,246,0.2)";
+      el.style.color = "rgba(200,200,240,0.7)";
+      el.style.background = "rgba(10,5,28,0.4)";
+    }}
   >
     <Icon size={18} />
-    <span className="social-tooltip">{label}</span>
-    <div className="social-sheen" />
+    {/* Sheen */}
+    <span
+      style={{
+        position: "absolute",
+        inset: 0,
+        background:
+          "linear-gradient(135deg, rgba(255,255,255,0.1), transparent)",
+        transform: "translateX(-100%)",
+        transition: "transform 0.5s ease",
+        pointerEvents: "none",
+      }}
+      className="hero-social-sheen"
+    />
+    {/* Tooltip */}
+    <span
+      style={{
+        position: "absolute",
+        bottom: "calc(100% + 8px)",
+        left: "50%",
+        transform: "translateX(-50%)",
+        background: "rgba(10,5,28,0.95)",
+        color: "rgba(200,200,240,0.9)",
+        fontSize: 10,
+        letterSpacing: "1.5px",
+        textTransform: "uppercase",
+        padding: "5px 10px",
+        borderRadius: 6,
+        border: "0.5px solid rgba(139,92,246,0.2)",
+        pointerEvents: "none",
+        opacity: 0,
+        transition: "opacity 0.2s",
+        whiteSpace: "nowrap",
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+      className="hero-social-tip"
+    >
+      {label}
+    </span>
   </motion.a>
 );
 
-// ─── Hero ───────────────────────────────────────────────────────────────────────
+// ─── Hero ─────────────────────────────────────────────────────────────────────
 
 const Hero: React.FC = () => {
   const scrollToAbout = () => {
-    document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
+    document
+      .getElementById("about-section")
+      ?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
 
         #hero-section {
           font-family: 'Outfit', sans-serif;
@@ -130,19 +246,17 @@ const Hero: React.FC = () => {
           min-height: 100svh;
           display: flex;
           align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          /* Transparent — SpaceBackground canvas shows through */
           background: transparent;
+          overflow: hidden;
+          padding: 100px 0 80px;
         }
 
-        /* Vignette to deepen edges without covering the stars */
+        /* Vignette — deepens edges, stars still visible */
         #hero-section::after {
           content: '';
           position: absolute; inset: 0;
-          background: radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(2,1,10,0.55) 80%, rgba(2,1,10,0.88) 100%);
-          pointer-events: none;
-          z-index: 1;
+          background: radial-gradient(ellipse at 50% 50%, transparent 25%, rgba(2,1,10,0.45) 75%, rgba(2,1,10,0.82) 100%);
+          pointer-events: none; z-index: 1;
         }
 
         /* Scanlines */
@@ -150,253 +264,282 @@ const Hero: React.FC = () => {
           position: absolute; inset: 0;
           background: repeating-linear-gradient(
             0deg, transparent, transparent 3px,
-            rgba(0,0,0,0.018) 3px, rgba(0,0,0,0.018) 4px
+            rgba(0,0,0,0.016) 3px, rgba(0,0,0,0.016) 4px
           );
           pointer-events: none; z-index: 2;
         }
 
-        /* Content sits above vignette */
-        .hero-content {
+        /* Two-column layout */
+        .hero-inner {
           position: relative; z-index: 10;
-          width: 100%; max-width: 1000px;
+          width: 100%; max-width: 1200px;
           margin: 0 auto; padding: 0 24px;
-          display: flex; flex-direction: column;
-          align-items: center; text-align: center;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 56px;
+          align-items: center;
         }
 
+        /* ── Left column ── */
+        .hero-left { display: flex; flex-direction: column; align-items: flex-start; }
+
         .hero-eyebrow {
-          font-size: 11px; font-weight: 400;
+          font-size: 10px; font-weight: 500;
           letter-spacing: 5px; text-transform: uppercase;
           color: rgba(139,92,246,0.85);
-          margin-bottom: 20px;
+          margin-bottom: 22px;
           display: flex; align-items: center; gap: 10px;
+          font-family: 'DM Sans', sans-serif;
         }
-        .hero-eyebrow::before,
-        .hero-eyebrow::after {
+        .hero-eyebrow::before {
           content: ''; display: block;
-          width: 28px; height: 1px;
-          background: rgba(139,92,246,0.4);
+          width: 24px; height: 1px;
+          background: rgba(139,92,246,0.45);
         }
 
         .hero-name {
           font-family: 'Instrument Serif', serif;
-          font-size: clamp(56px, 10vw, 112px);
-          line-height: 1; color: #fff;
-          margin-bottom: 16px; letter-spacing: -2px;
+          font-size: clamp(52px, 8vw, 96px);
+          line-height: 1.0; color: #fff;
+          letter-spacing: -2px;
+          margin-bottom: 18px;
         }
-        .hero-name-accent {
+        .hero-name-first {
+          display: block;
+          color: rgba(255,255,255,0.92);
+        }
+        .hero-name-last {
+          display: block;
           font-style: italic;
           background: linear-gradient(135deg, #a78bfa 0%, #818cf8 45%, #38bdf8 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-          animation: hueShift 8s ease-in-out infinite;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: heroHue 8s ease-in-out infinite;
         }
-        @keyframes hueShift { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
+        @keyframes heroHue { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
 
         .hero-subtitle {
-          font-size: clamp(16px, 3vw, 22px); font-weight: 300;
-          color: rgba(200,200,230,0.7);
-          margin-bottom: 24px; height: 34px;
-          display: flex; align-items: center; justify-content: center;
-          letter-spacing: 0.3px;
+          font-size: clamp(15px, 2.2vw, 19px);
+          font-weight: 300;
+          color: rgba(200,200,230,0.6);
+          margin-bottom: 20px;
+          height: 30px;
+          display: flex; align-items: center;
+          letter-spacing: 0.2px;
         }
-        .typewriter-wrap { display: inline-flex; align-items: center; gap: 2px; }
-        .cursor-blink {
-          display: inline-block; color: #a78bfa;
-          animation: blink 1s step-end infinite;
-          font-weight: 300; margin-left: 1px;
+        @keyframes heroCursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+        /* Separator line */
+        .hero-sep {
+          width: 48px; height: 1px;
+          background: linear-gradient(90deg, rgba(139,92,246,0.6), transparent);
+          margin-bottom: 20px;
+          position: relative;
         }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        .hero-sep::before {
+          content: ''; position: absolute;
+          left: 0; top: -2px;
+          width: 4px; height: 4px; border-radius: 50%;
+          background: #a78bfa; box-shadow: 0 0 6px #a78bfa;
+        }
 
         .hero-desc {
-          font-size: clamp(14px, 2vw, 16px); font-weight: 300;
-          color: rgba(180,180,210,0.5); max-width: 480px;
-          line-height: 1.8; margin-bottom: 44px; letter-spacing: 0.1px;
+          font-size: clamp(13px, 1.6vw, 15px);
+          font-weight: 300;
+          color: rgba(180,180,215,0.48);
+          max-width: 420px;
+          line-height: 1.85;
+          margin-bottom: 36px;
+          letter-spacing: 0.1px;
         }
 
-        .social-row { display: flex; gap: 14px; margin-bottom: 48px; }
+        /* Social + scroll row */
+        .hero-actions {
+          display: flex; align-items: center;
+          gap: 24px; flex-wrap: wrap;
+        }
+        .social-row { display: flex; gap: 10px; }
 
-        .social-icon {
-          position: relative; display: flex; align-items: center; justify-content: center;
-          width: 46px; height: 46px; border-radius: 14px;
-          border: 1px solid rgba(139,92,246,0.2);
-          background: rgba(10,5,28,0.4);
-          backdrop-filter: blur(12px);
-          color: rgba(200,200,240,0.7); text-decoration: none;
-          transition: border-color 0.25s, color 0.25s, background 0.25s;
-          overflow: hidden;
-        }
-        .social-icon:hover {
-          border-color: rgba(139,92,246,0.55);
-          background: rgba(139,92,246,0.14);
-          color: #a78bfa;
-        }
-        .social-sheen {
-          position: absolute; inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
-          transform: translateX(-100%); transition: transform 0.5s ease;
-        }
-        .social-icon:hover .social-sheen { transform: translateX(100%); }
-        .social-tooltip {
-          position: absolute; bottom: calc(100% + 8px); left: 50%;
-          transform: translateX(-50%);
-          background: rgba(10,5,28,0.95); color: rgba(200,200,240,0.9);
-          font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-          padding: 5px 10px; border-radius: 6px;
-          border: 1px solid rgba(139,92,246,0.2);
-          pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap;
-        }
-        .social-icon:hover .social-tooltip { opacity: 1; }
+        .hero-social-sheen { pointer-events: none; }
+        a:hover .hero-social-sheen { transform: translateX(100%) !important; }
+        a:hover .hero-social-tip   { opacity: 1 !important; }
 
+        /* Scroll button */
         .scroll-btn {
-          position: relative; width: 48px; height: 48px; border-radius: 50%;
+          position: relative;
+          width: 46px; height: 46px; border-radius: 50%;
           border: 1px solid rgba(139,92,246,0.25);
           background: rgba(10,5,28,0.35);
           backdrop-filter: blur(12px);
           display: flex; align-items: center; justify-content: center;
           cursor: pointer; color: rgba(200,200,240,0.5);
           transition: border-color 0.25s, color 0.25s, background 0.25s;
-          overflow: hidden;
+          overflow: visible; flex-shrink: 0;
         }
-        .scroll-btn:hover { border-color: rgba(139,92,246,0.6); color: #a78bfa; background: rgba(139,92,246,0.12); }
+        .scroll-btn:hover {
+          border-color: rgba(139,92,246,0.55);
+          color: #a78bfa;
+          background: rgba(139,92,246,0.1);
+        }
         .scroll-btn::before {
-          content: ''; position: absolute; inset: -2px; border-radius: 50%;
+          content: ''; position: absolute; inset: -3px; border-radius: 50%;
           border: 1px solid rgba(139,92,246,0.15);
-          animation: ringPulse 2.5s ease-in-out infinite;
+          animation: heroRingPulse 2.5s ease-in-out infinite;
         }
-        @keyframes ringPulse { 0%{transform:scale(1);opacity:.6} 100%{transform:scale(1.7);opacity:0} }
-        .scroll-btn svg { animation: arrowBounce 2s ease-in-out infinite; }
-        @keyframes arrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
+        @keyframes heroRingPulse { 0%{transform:scale(1);opacity:.6} 100%{transform:scale(1.75);opacity:0} }
+        .scroll-btn svg { animation: heroBounce 2s ease-in-out infinite; }
+        @keyframes heroBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
 
-        .live-badge {
-          position: absolute; top: 28px; right: 28px; z-index: 20;
-          display: flex; align-items: center; gap: 7px;
-          padding: 7px 14px; border-radius: 100px;
-          border: 1px solid rgba(139,92,246,0.18);
-          background: rgba(10,5,28,0.5);
-          backdrop-filter: blur(12px);
+        /* ── Stats bar (bottom of left col) ── */
+        .hero-stats {
+          display: flex; align-items: center;
+          gap: 0; margin-top: 40px;
+          padding: 16px 0;
+          border-top: 1px solid rgba(255,255,255,0.05);
+          width: 100%;
         }
-        .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; animation: dotPulse 2s ease-in-out infinite; }
-        @keyframes dotPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.5)} }
-        .live-text { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: rgba(167,139,250,0.6); }
+        .hero-stat {
+          flex: 1; display: flex; flex-direction: column;
+          align-items: center; gap: 5px;
+          padding: 0 8px;
+        }
+        .hero-stat:not(:last-child) { border-right: 1px solid rgba(139,92,246,0.12); }
+        .stat-val {
+          font-family: 'Syne', sans-serif;
+          font-size: clamp(20px, 3vw, 28px);
+          font-weight: 800;
+          background: linear-gradient(135deg, #fff, #a78bfa);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          line-height: 1; letter-spacing: -0.03em;
+        }
+        .stat-label {
+          font-size: 9px; letter-spacing: 2.5px;
+          text-transform: uppercase;
+          color: rgba(180,180,220,0.32);
+          font-family: 'DM Sans', sans-serif;
+        }
 
-        .hero-statusbar {
-          position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
-          display: flex; align-items: center; gap: 28px;
-          z-index: 20; opacity: 0; animation: fadeIn 0.7s ease 1.8s forwards;
+        /* ── Right column ── */
+        .hero-right {
+          display: flex;
+          justify-content: center;
+          align-items: center;
         }
-        .status-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .status-val {
-          font-family: 'Instrument Serif', serif; font-size: 28px;
-          background: linear-gradient(135deg, #a78bfa, #818cf8, #38bdf8);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-          line-height: 1;
-        }
-        .status-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: rgba(180,180,220,0.35); }
-        .status-divider { width: 1px; height: 36px; background: rgba(139,92,246,0.15); }
-        @keyframes fadeIn { to { opacity: 1; } }
 
-        @media (max-width: 640px) {
-          .hero-eyebrow { font-size: 10px; letter-spacing: 3px; }
-          .hero-eyebrow::before, .hero-eyebrow::after { width: 18px; }
-          .hero-desc { margin-bottom: 32px; }
-          .social-row { gap: 10px; margin-bottom: 36px; }
-          .social-icon { width: 42px; height: 42px; }
-          .live-badge { top: 16px; right: 16px; padding: 5px 10px; }
-          .hero-statusbar { gap: 16px; bottom: 20px; }
-          .status-val { font-size: 22px; }
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+          .hero-inner {
+            grid-template-columns: 1fr !important;
+            gap: 48px;
+            text-align: center;
+          }
+          .hero-left { align-items: center; }
+          .hero-eyebrow { justify-content: center; }
+          .hero-eyebrow::before { display: none; }
+          .hero-sep { margin-left: auto; margin-right: auto; }
+          .hero-desc { margin-left: auto; margin-right: auto; }
+          .hero-actions { justify-content: center; }
+          .hero-right { justify-content: center; }
         }
-        @media (max-width: 380px) {
-          .status-item:nth-child(5) { display: none; }
-          .status-divider:nth-last-child(2) { display: none; }
+        @media (max-width: 540px) {
+          #hero-section { padding: 88px 0 60px; }
+          .hero-name { letter-spacing: -1.5px; }
+          .hero-actions { gap: 14px; }
         }
       `}</style>
 
       <section id="hero-section">
-        {/* Subtle scanlines */}
         <div className="hero-scanlines" />
 
-        {/* Live badge */}
-        <motion.div
-          className="live-badge"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5, duration: 0.6 }}
-        >
-          <div className="live-dot" />
-          <span className="live-text">Available</span>
-        </motion.div>
-
-        {/* Main content */}
-        <motion.div
-          className="hero-content"
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-        >
-          <motion.div className="hero-eyebrow" variants={fadeUp}>
-            Portfolio 2025
-          </motion.div>
-
-          <motion.h1 className="hero-name" variants={fadeUp}>
-            Shanjid <span className="hero-name-accent">Ahmad</span>
-          </motion.h1>
-
-          <motion.div className="hero-subtitle" variants={fadeUp}>
-            <Typewriter />
-          </motion.div>
-
-          <motion.p className="hero-desc" variants={fadeUp}>
-            I build exceptional digital experiences with modern web
-            technologies. Passionate about clean code, thoughtful UX, and
-            solving complex problems.
-          </motion.p>
-
-          <motion.div className="social-row" variants={stagger}>
-            {socialLinks.map((link, i) => (
-              <SocialIcon key={link.label} {...link} index={i} />
-            ))}
-          </motion.div>
-
-          <motion.button
-            className="scroll-btn"
-            variants={fadeUp}
-            onClick={scrollToAbout}
-            aria-label="Scroll to about"
-            type="button"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.92 }}
+        <div className="hero-inner">
+          {/* ── LEFT COLUMN ── */}
+          <motion.div
+            className="hero-left"
+            variants={stagger}
+            initial="hidden"
+            animate="show"
           >
-            <ArrowDown size={18} />
-          </motion.button>
-        </motion.div>
+            {/* Eyebrow */}
+            <motion.div className="hero-eyebrow" variants={fadeUp}>
+              Portfolio · 2025
+            </motion.div>
 
-        {/* Stats bar */}
-        <motion.div
-          className="hero-statusbar"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.6, duration: 0.8 }}
-        >
-          <div className="status-item">
-            <span className="status-val">2+</span>
-            <span className="status-label">Years</span>
-          </div>
-          <div className="status-divider" />
-          <div className="status-item">
-            <span className="status-val">30+</span>
-            <span className="status-label">Projects</span>
-          </div>
-          <div className="status-divider" />
-          <div className="status-item">
-            <span className="status-val">MERN</span>
-            <span className="status-label">Stack</span>
-          </div>
-          <div className="status-divider" />
-          <div className="status-item">
-            <span className="status-val">∞</span>
-            <span className="status-label">Curiosity</span>
-          </div>
-        </motion.div>
+            {/* Name */}
+            <motion.h1 className="hero-name" variants={fadeUp}>
+              <span className="hero-name-first">Shanjid</span>
+              <span className="hero-name-last">Ahmad</span>
+            </motion.h1>
+
+            {/* Typewriter role */}
+            <motion.div className="hero-subtitle" variants={fadeUp}>
+              <Typewriter />
+            </motion.div>
+
+            {/* Separator */}
+            <motion.div className="hero-sep" variants={fadeUp} />
+
+            {/* Description */}
+            <motion.p className="hero-desc" variants={fadeUp}>
+              I architect and ship full-stack web products — from API design to
+              pixel-perfect interfaces. Five years of turning ideas into
+              production-grade reality with the MERN stack, Next.js, and
+              TypeScript.
+            </motion.p>
+
+            {/* Social icons + scroll btn */}
+            <motion.div className="hero-actions" variants={stagger}>
+              <div className="social-row">
+                {SOCIAL_LINKS.map((link) => (
+                  <SocialIcon key={link.label} {...link} />
+                ))}
+              </div>
+
+              <motion.button
+                className="scroll-btn"
+                variants={fadeUp}
+                onClick={scrollToAbout}
+                aria-label="Scroll to about section"
+                type="button"
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+              >
+                <ArrowDown size={17} />
+              </motion.button>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              className="hero-stats"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                delay: 1.4,
+                duration: 0.8,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+            >
+              {STATS.map((stat) => (
+                <div key={stat.label} className="hero-stat">
+                  <span className="stat-val">{stat.value}</span>
+                  <span className="stat-label">{stat.label}</span>
+                </div>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          {/* ── RIGHT COLUMN — VS Code widget ── */}
+          <motion.div
+            className="hero-right"
+            variants={fadeRight}
+            initial="hidden"
+            animate="show"
+          >
+            <VSCodeWidget />
+          </motion.div>
+        </div>
       </section>
     </>
   );
