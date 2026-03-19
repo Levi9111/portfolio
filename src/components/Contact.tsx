@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Mail,
   MapPin,
@@ -12,7 +12,7 @@ import {
   ArrowUpRight,
   Zap,
 } from "lucide-react";
-import { motion, useInView, Variants } from "framer-motion";
+import { motion, useInView, Variants, AnimatePresence } from "framer-motion";
 import emailjs from "@emailjs/browser";
 
 // ─── EmailJS config ───────────────────────────────────────────────────────────
@@ -26,6 +26,7 @@ const AUTO_REPLY_TEMPLATE = import.meta.env
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormStatus = "idle" | "loading" | "success" | "error";
+type PhoneScreen = "idle" | "dialing" | "calling" | "email" | "map";
 
 interface FormData {
   name: string;
@@ -34,93 +35,21 @@ interface FormData {
   message: string;
 }
 
-interface ContactItem {
-  readonly icon: React.ElementType;
-  readonly label: string;
-  readonly value: string;
-  readonly href: string;
-  readonly accent: string;
-  readonly glow: string;
-}
-
-interface SocialLink {
-  readonly icon: React.ElementType;
-  readonly label: string;
-  readonly href: string;
-  readonly accent: string;
-}
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-const CONTACT_ITEMS: readonly ContactItem[] = [
-  {
-    icon: Mail,
-    label: "Email",
-    value: "shanjidahmad502@gmail.com",
-    href: "mailto:shanjidahmad502@gmail.com",
-    accent: "#60a5fa",
-    glow: "rgba(96,165,250,0.12)",
-  },
-  {
-    icon: Phone,
-    label: "WhatsApp",
-    value: "+880 1626 974685",
-    href: "https://wa.me/8801626974685",
-    accent: "#34d399",
-    glow: "rgba(52,211,153,0.12)",
-  },
-  {
-    icon: MapPin,
-    label: "Location",
-    value: "Chattogram, Bangladesh",
-    href: "https://maps.google.com/?q=Chattogram,Bangladesh",
-    accent: "#a78bfa",
-    glow: "rgba(167,139,250,0.12)",
-  },
-] as const;
-
-const SOCIAL_LINKS: readonly SocialLink[] = [
-  {
-    icon: Github,
-    label: "GitHub",
-    href: "https://github.com/levi9111",
-    accent: "#e2e8f0",
-  },
-  {
-    icon: Linkedin,
-    label: "LinkedIn",
-    href: "https://www.linkedin.com/in/shanjid-ahmad-b77b5427b",
-    accent: "#60a5fa",
-  },
-] as const;
-
 // ─── Variants ─────────────────────────────────────────────────────────────────
 
 const stagger: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.12, delayChildren: 0.08 } },
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
 };
-
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 32, filter: "blur(6px)" },
+  hidden: { opacity: 0, y: 28, filter: "blur(5px)" },
   show: {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] },
-  },
-};
-
-const fadeLeft: Variants = {
-  hidden: { opacity: 0, x: -28, filter: "blur(4px)" },
-  show: {
-    opacity: 1,
-    x: 0,
-    filter: "blur(0px)",
     transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] },
   },
 };
-
 const fadeRight: Variants = {
   hidden: { opacity: 0, x: 28, filter: "blur(4px)" },
   show: {
@@ -130,125 +59,1072 @@ const fadeRight: Variants = {
     transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] },
   },
 };
+const screenAnim: Variants = {
+  hidden: { opacity: 0, scale: 0.96, y: 10 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+  },
+  exit: { opacity: 0, scale: 0.96, y: -8, transition: { duration: 0.25 } },
+};
 
-// ─── Contact Info Card ────────────────────────────────────────────────────────
+// ─── Phone Dialer Hook ────────────────────────────────────────────────────────
 
-interface ContactCardProps {
-  item: ContactItem;
+const PHONE_NUMBER = "01626974685";
+
+function useDialer(active: boolean) {
+  const [digits, setDigits] = useState<string[]>([]);
+  const [calling, setCalling] = useState(false);
+
+  useEffect(() => {
+    if (!active) {
+      setDigits([]);
+      setCalling(false);
+      return;
+    }
+    let i = 0;
+    const dial = setInterval(() => {
+      if (i < PHONE_NUMBER.length) {
+        setDigits((d) => [...d, PHONE_NUMBER[i]]);
+        i++;
+      } else {
+        clearInterval(dial);
+        setTimeout(() => setCalling(true), 400);
+      }
+    }, 200);
+    return () => clearInterval(dial);
+  }, [active]);
+
+  return { digits, calling };
 }
 
-const ContactCard: React.FC<ContactCardProps> = ({ item }) => {
-  const [hovered, setHovered] = useState(false);
-  const Icon = item.icon;
+// ─── Typewriter Hook ──────────────────────────────────────────────────────────
+
+function useTypewriter(text: string, active: boolean, speed = 45) {
+  const [display, setDisplay] = useState("");
+  useEffect(() => {
+    if (!active) {
+      setDisplay("");
+      return;
+    }
+    let i = 0;
+    const t = setInterval(() => {
+      i++;
+      setDisplay(text.slice(0, i));
+      if (i >= text.length) clearInterval(t);
+    }, speed);
+    return () => clearInterval(t);
+  }, [active, text, speed]);
+  return display;
+}
+
+// ─── Phone Screen: Idle ───────────────────────────────────────────────────────
+
+const IdleScreen: React.FC = () => {
+  const now = new Date();
+  const time = now.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const date = now.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 
   return (
-    <motion.a
-      variants={fadeLeft}
-      href={item.href}
-      target={item.href.startsWith("http") ? "_blank" : undefined}
-      rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
-      whileHover={{ x: 4, scale: 1.01 }}
+    <motion.div
+      variants={screenAnim}
+      initial="hidden"
+      animate="show"
+      exit="exit"
       style={{
+        height: "100%",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        gap: 14,
-        padding: "14px 18px",
-        borderRadius: 14,
-        textDecoration: "none",
-        border: `1px solid ${hovered ? item.accent + "44" : "rgba(255,255,255,0.07)"}`,
-        background: hovered ? `rgba(5,3,15,0.7)` : "rgba(5,3,15,0.45)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
-        transition: "border-color 0.25s, background 0.25s",
-        position: "relative",
-        overflow: "hidden",
-        cursor: "default",
+        justifyContent: "center",
+        gap: 8,
+        padding: "0 20px",
       }}
     >
-      {/* Left accent bar */}
       <div
         style={{
-          position: "absolute",
-          left: 0,
-          top: "20%",
-          bottom: "20%",
-          width: 2,
-          borderRadius: 1,
-          background: item.accent,
-          opacity: hovered ? 1 : 0,
-          transition: "opacity 0.25s",
-          boxShadow: `0 0 8px ${item.accent}`,
-        }}
-      />
-
-      {/* Icon */}
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 11,
-          flexShrink: 0,
-          background: `${item.accent}14`,
-          border: `1px solid ${item.accent}28`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          transition: "transform 0.3s",
-          transform: hovered ? "scale(1.1) rotate(-5deg)" : "scale(1)",
+          fontSize: 52,
+          fontWeight: 200,
+          color: "#fff",
+          letterSpacing: "-2px",
+          fontFamily: "'Syne',sans-serif",
+          lineHeight: 1,
         }}
       >
-        <Icon size={18} color={item.accent} />
+        {time}
       </div>
-
-      {/* Text */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            color: "rgba(200,200,240,0.38)",
-            fontFamily: "'DM Sans', sans-serif",
-            margin: "0 0 3px",
-          }}
-        >
-          {item.label}
-        </p>
-        <p
-          style={{
-            fontSize: 13.5,
-            fontWeight: 400,
-            color: hovered ? "#fff" : "rgba(220,220,245,0.75)",
-            fontFamily: "'Outfit', sans-serif",
-            transition: "color 0.25s",
-            margin: 0,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {item.value}
-        </p>
-      </div>
-
-      <ArrowUpRight
-        size={14}
-        color={item.accent}
+      <div
         style={{
-          opacity: hovered ? 1 : 0,
-          transition: "opacity 0.25s",
-          flexShrink: 0,
+          fontSize: 13,
+          color: "rgba(255,255,255,0.4)",
+          fontFamily: "'DM Sans',sans-serif",
         }}
-      />
-    </motion.a>
+      >
+        {date}
+      </div>
+      <div
+        style={{
+          marginTop: 16,
+          fontSize: 11,
+          color: "rgba(255,255,255,0.2)",
+          fontFamily: "'DM Sans',sans-serif",
+          letterSpacing: "0.08em",
+          textAlign: "center",
+        }}
+      >
+        Tap a contact button
+        <br />
+        to interact
+      </div>
+    </motion.div>
   );
 };
 
+// ─── Phone Screen: Dialing ────────────────────────────────────────────────────
+
+const DialingScreen: React.FC<{ digits: string[]; calling: boolean }> = ({
+  digits,
+  calling,
+}) => {
+  const displayStr = digits.join("");
+  const formatted =
+    displayStr.length > 5
+      ? `${displayStr.slice(0, 5)} ${displayStr.slice(5)}`
+      : displayStr;
+
+  if (calling) {
+    return (
+      <motion.div
+        variants={screenAnim}
+        initial="hidden"
+        animate="show"
+        exit="exit"
+        style={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 14,
+        }}
+      >
+        {/* Ripple rings */}
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              width: 80 + i * 32,
+              height: 80 + i * 32,
+              borderRadius: "50%",
+              border: "1px solid rgba(52,211,153,0.35)",
+              animation: `contactRipple 2s ${i * 0.4}s ease-out infinite`,
+            }}
+            aria-hidden="true"
+          />
+        ))}
+        <div
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg,#34d399,#059669)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <Phone size={26} color="#fff" />
+        </div>
+        <div style={{ textAlign: "center", zIndex: 1 }}>
+          <div
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: "#fff",
+              fontFamily: "'Syne',sans-serif",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Shanjid Ahmad
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: "#34d399",
+              marginTop: 4,
+              fontFamily: "'DM Sans',sans-serif",
+              animation: "contactDotPulse 1.5s ease-in-out infinite",
+            }}
+          >
+            Calling…
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              color: "rgba(255,255,255,0.3)",
+              marginTop: 4,
+              fontFamily: "'DM Sans',sans-serif",
+            }}
+          >
+            +880 {PHONE_NUMBER}
+          </div>
+        </div>
+        <a
+          href={`tel:+880${PHONE_NUMBER}`}
+          style={{
+            marginTop: 8,
+            padding: "8px 20px",
+            borderRadius: 999,
+            background: "#34d399",
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 700,
+            textDecoration: "none",
+            fontFamily: "'DM Sans',sans-serif",
+            letterSpacing: "0.05em",
+            zIndex: 1,
+          }}
+        >
+          Call Now ↗
+        </a>
+      </motion.div>
+    );
+  }
+
+  const KEYS = [
+    ["1", "2", "3"],
+    ["4", "5", "6"],
+    ["7", "8", "9"],
+    ["*", "0", "#"],
+  ];
+
+  return (
+    <motion.div
+      variants={screenAnim}
+      initial="hidden"
+      animate="show"
+      exit="exit"
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        padding: "12px 14px",
+      }}
+    >
+      {/* Number display */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Syne',sans-serif",
+            fontSize: 26,
+            fontWeight: 700,
+            color: "#fff",
+            letterSpacing: "2px",
+            minHeight: 36,
+            textAlign: "center",
+          }}
+        >
+          {formatted}
+          <span
+            style={{
+              opacity: 0.4,
+              animation: "contactBlink 1s step-end infinite",
+            }}
+          >
+            |
+          </span>
+        </div>
+      </div>
+      {/* Keypad */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3,1fr)",
+          gap: 6,
+        }}
+      >
+        {KEYS.map((row, ri) =>
+          row.map((k, ki) => {
+            const idx = ri * 3 + ki;
+            const isNext = idx === digits.length;
+            return (
+              <div
+                key={k}
+                style={{
+                  height: 36,
+                  borderRadius: 10,
+                  background: isNext
+                    ? "rgba(52,211,153,0.25)"
+                    : "rgba(255,255,255,0.06)",
+                  border: `1px solid ${isNext ? "rgba(52,211,153,0.5)" : "rgba(255,255,255,0.08)"}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: isNext ? "#34d399" : "rgba(255,255,255,0.6)",
+                  fontFamily: "'Syne',sans-serif",
+                  transition: "all 0.15s",
+                }}
+              >
+                {k}
+              </div>
+            );
+          }),
+        )}
+      </div>
+      {/* Green dial button */}
+      <div
+        style={{
+          marginTop: 8,
+          height: 36,
+          borderRadius: 10,
+          background: "rgba(52,211,153,0.15)",
+          border: "1px solid rgba(52,211,153,0.3)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+        }}
+      >
+        <Phone size={14} color="#34d399" />
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#34d399",
+            fontFamily: "'DM Sans',sans-serif",
+          }}
+        >
+          Dialing…
+        </span>
+      </div>
+    </motion.div>
+  );
+};
+
+// ─── Phone Screen: Email ──────────────────────────────────────────────────────
+
+const EMAIL_ADDRESS = "shanjidahmad502@gmail.com";
+
+const EmailScreen: React.FC<{ active: boolean }> = ({ active }) => {
+  const typed = useTypewriter(EMAIL_ADDRESS, active, 48);
+  return (
+    <motion.div
+      variants={screenAnim}
+      initial="hidden"
+      animate="show"
+      exit="exit"
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        padding: "16px 14px",
+        gap: 10,
+      }}
+    >
+      {/* Mail header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          paddingBottom: 10,
+          borderBottom: "0.5px solid rgba(255,255,255,0.08)",
+        }}
+      >
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            background: "rgba(96,165,250,0.15)",
+            border: "1px solid rgba(96,165,250,0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Mail size={13} color="#60a5fa" />
+        </div>
+        <div>
+          <div
+            style={{
+              fontSize: 10,
+              color: "rgba(255,255,255,0.3)",
+              fontFamily: "'DM Sans',sans-serif",
+            }}
+          >
+            New Message
+          </div>
+          <div
+            style={{
+              fontSize: 9,
+              color: "rgba(96,165,250,0.7)",
+              fontFamily: "'DM Sans',sans-serif",
+            }}
+          >
+            Gmail
+          </div>
+        </div>
+      </div>
+      {/* To field */}
+      <div>
+        <div
+          style={{
+            fontSize: 9,
+            color: "rgba(255,255,255,0.25)",
+            fontFamily: "'DM Sans',sans-serif",
+            marginBottom: 4,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          To
+        </div>
+        <div
+          style={{
+            padding: "7px 10px",
+            borderRadius: 8,
+            background: "rgba(255,255,255,0.04)",
+            border: "0.5px solid rgba(96,165,250,0.3)",
+            fontSize: 12,
+            color: "#60a5fa",
+            fontFamily: "'DM Sans',sans-serif",
+            letterSpacing: "0.01em",
+            minHeight: 28,
+          }}
+        >
+          {typed}
+          <span
+            style={{
+              opacity: 0.5,
+              animation: "contactBlink 1s step-end infinite",
+            }}
+          >
+            |
+          </span>
+        </div>
+      </div>
+      {/* Subject skeleton */}
+      <div>
+        <div
+          style={{
+            fontSize: 9,
+            color: "rgba(255,255,255,0.25)",
+            fontFamily: "'DM Sans',sans-serif",
+            marginBottom: 4,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          Subject
+        </div>
+        <div
+          style={{
+            height: 26,
+            borderRadius: 8,
+            background: "rgba(255,255,255,0.03)",
+            border: "0.5px solid rgba(255,255,255,0.06)",
+          }}
+        />
+      </div>
+      {/* Body skeleton lines */}
+      <div
+        style={{
+          flex: 1,
+          padding: "8px 10px",
+          borderRadius: 8,
+          background: "rgba(255,255,255,0.02)",
+          border: "0.5px solid rgba(255,255,255,0.05)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 5,
+        }}
+      >
+        {[85, 70, 90, 55].map((w, i) => (
+          <div
+            key={i}
+            style={{
+              height: 4,
+              borderRadius: 2,
+              background: "rgba(255,255,255,0.07)",
+              width: `${w}%`,
+            }}
+          />
+        ))}
+      </div>
+      {/* Send button */}
+      <a
+        href={`mailto:${EMAIL_ADDRESS}`}
+        style={{
+          height: 32,
+          borderRadius: 9,
+          background: "rgba(96,165,250,0.2)",
+          border: "1px solid rgba(96,165,250,0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          textDecoration: "none",
+        }}
+      >
+        <Send size={11} color="#60a5fa" />
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            color: "#60a5fa",
+            fontFamily: "'DM Sans',sans-serif",
+          }}
+        >
+          Open in Gmail ↗
+        </span>
+      </a>
+    </motion.div>
+  );
+};
+
+// ─── Phone Screen: Map ────────────────────────────────────────────────────────
+
+const MapScreen: React.FC = () => (
+  <motion.div
+    variants={screenAnim}
+    initial="hidden"
+    animate="show"
+    exit="exit"
+    style={{
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      padding: "14px",
+      gap: 12,
+    }}
+  >
+    {/* Map area */}
+    <div
+      style={{
+        flex: 1,
+        borderRadius: 12,
+        overflow: "hidden",
+        position: "relative",
+        background: "#0d1117",
+        border: "0.5px solid rgba(167,139,250,0.2)",
+      }}
+    >
+      {/* Grid lines simulating map */}
+      {[20, 40, 60, 80].map((p) => (
+        <React.Fragment key={p}>
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: `${p}%`,
+              height: "0.5px",
+              background: "rgba(255,255,255,0.04)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              left: `${p}%`,
+              width: "0.5px",
+              background: "rgba(255,255,255,0.04)",
+            }}
+          />
+        </React.Fragment>
+      ))}
+      {/* Subtle roads */}
+      <div
+        style={{
+          position: "absolute",
+          top: "45%",
+          left: 0,
+          right: 0,
+          height: "1.5px",
+          background: "rgba(255,255,255,0.08)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: "38%",
+          top: 0,
+          bottom: 0,
+          width: "1.5px",
+          background: "rgba(255,255,255,0.06)",
+        }}
+      />
+      {/* Location pin */}
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 2,
+        }}
+      >
+        {/* Ripples */}
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%,-50%)",
+              width: 40 + i * 24,
+              height: 40 + i * 24,
+              borderRadius: "50%",
+              border: "1px solid rgba(167,139,250,0.4)",
+              animation: `contactRipple 2s ${i * 0.6}s ease-out infinite`,
+            }}
+            aria-hidden="true"
+          />
+        ))}
+        {/* Pin */}
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "50% 50% 50% 0",
+            background: "#a78bfa",
+            transform: "rotate(-45deg)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 14px rgba(167,139,250,0.5)",
+          }}
+        >
+          <MapPin
+            size={12}
+            color="#fff"
+            style={{ transform: "rotate(45deg)" }}
+          />
+        </div>
+      </div>
+    </div>
+    {/* Location card */}
+    <div
+      style={{
+        padding: "10px 12px",
+        borderRadius: 10,
+        background: "rgba(167,139,250,0.08)",
+        border: "0.5px solid rgba(167,139,250,0.25)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          color: "rgba(167,139,250,0.6)",
+          fontFamily: "'DM Sans',sans-serif",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          marginBottom: 3,
+        }}
+      >
+        Location
+      </div>
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 600,
+          color: "#fff",
+          fontFamily: "'Syne',sans-serif",
+        }}
+      >
+        Chattogram, Bangladesh
+      </div>
+      <div
+        style={{
+          fontSize: 10,
+          color: "rgba(255,255,255,0.3)",
+          fontFamily: "'DM Sans',sans-serif",
+          marginTop: 2,
+        }}
+      >
+        22.3569° N, 91.7832° E · Working globally
+      </div>
+    </div>
+    <a
+      href="https://maps.google.com/?q=Chattogram,Bangladesh"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        height: 30,
+        borderRadius: 9,
+        background: "rgba(167,139,250,0.15)",
+        border: "1px solid rgba(167,139,250,0.35)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        textDecoration: "none",
+      }}
+    >
+      <MapPin size={11} color="#a78bfa" />
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 600,
+          color: "#a78bfa",
+          fontFamily: "'DM Sans',sans-serif",
+        }}
+      >
+        Open in Google Maps ↗
+      </span>
+    </a>
+  </motion.div>
+);
+
+// ─── Phone Mockup ─────────────────────────────────────────────────────────────
+
+interface PhoneMockupProps {
+  screen: PhoneScreen;
+  dialerState: { digits: string[]; calling: boolean };
+}
+
+const PhoneMockup: React.FC<PhoneMockupProps> = ({ screen, dialerState }) => (
+  <div style={{ position: "relative", width: 220, flexShrink: 0 }}>
+    {/* Phone shell */}
+    <div
+      style={{
+        width: 220,
+        borderRadius: 36,
+        background: "linear-gradient(160deg,#1a1a2e,#0f0f1a)",
+        border: "1.5px solid rgba(255,255,255,0.12)",
+        boxShadow:
+          "0 32px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)",
+        position: "relative",
+        overflow: "hidden",
+        paddingBottom: 8,
+      }}
+    >
+      {/* Side volume buttons */}
+      <div
+        style={{
+          position: "absolute",
+          left: -4,
+          top: 80,
+          width: 3.5,
+          height: 28,
+          borderRadius: "3px 0 0 3px",
+          background: "rgba(255,255,255,0.12)",
+        }}
+        aria-hidden="true"
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: -4,
+          top: 116,
+          width: 3.5,
+          height: 28,
+          borderRadius: "3px 0 0 3px",
+          background: "rgba(255,255,255,0.12)",
+        }}
+        aria-hidden="true"
+      />
+      {/* Power button */}
+      <div
+        style={{
+          position: "absolute",
+          right: -4,
+          top: 96,
+          width: 3.5,
+          height: 36,
+          borderRadius: "0 3px 3px 0",
+          background: "rgba(255,255,255,0.12)",
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Status bar */}
+      <div
+        style={{
+          padding: "10px 18px 4px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 10,
+            color: "rgba(255,255,255,0.7)",
+            fontFamily: "'DM Sans',sans-serif",
+            fontWeight: 600,
+          }}
+        >
+          {new Date().toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })}
+        </span>
+        {/* Notch / camera pill */}
+        <div
+          style={{
+            width: 60,
+            height: 16,
+            borderRadius: 999,
+            background: "#0a0a0f",
+            border: "0.5px solid rgba(255,255,255,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+          }}
+        >
+          <div
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.15)",
+            }}
+          />
+          <div
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.08)",
+              border: "0.5px solid rgba(255,255,255,0.2)",
+            }}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+          <div
+            style={{
+              fontSize: 9,
+              color: "rgba(255,255,255,0.5)",
+              fontFamily: "'DM Sans',sans-serif",
+            }}
+          >
+            5G
+          </div>
+          {/* Battery */}
+          <div
+            style={{
+              width: 18,
+              height: 9,
+              borderRadius: 2,
+              border: "0.8px solid rgba(255,255,255,0.3)",
+              position: "relative",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                right: -3,
+                top: "25%",
+                bottom: "25%",
+                width: 2.5,
+                background: "rgba(255,255,255,0.3)",
+                borderRadius: "0 1px 1px 0",
+              }}
+            />
+            <div
+              style={{
+                margin: 1.5,
+                height: "calc(100% - 3px)",
+                background: "#34d399",
+                borderRadius: 1,
+                width: "70%",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Screen area */}
+      <div
+        style={{
+          margin: "4px 10px 0",
+          borderRadius: 24,
+          background: "#08080f",
+          overflow: "hidden",
+          height: 340,
+          position: "relative",
+        }}
+      >
+        <AnimatePresence mode="wait">
+          {screen === "idle" && <IdleScreen key="idle" />}
+          {(screen === "dialing" || screen === "calling") && (
+            <DialingScreen
+              key="dialing"
+              digits={dialerState.digits}
+              calling={dialerState.calling}
+            />
+          )}
+          {screen === "email" && <EmailScreen key="email" active />}
+          {screen === "map" && <MapScreen key="map" />}
+        </AnimatePresence>
+      </div>
+
+      {/* Home indicator */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          paddingTop: 10,
+          paddingBottom: 4,
+        }}
+      >
+        <div
+          style={{
+            width: 60,
+            height: 4,
+            borderRadius: 2,
+            background: "rgba(255,255,255,0.2)",
+          }}
+        />
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Contact trigger buttons ──────────────────────────────────────────────────
+
+interface TriggerBtnProps {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  accent: string;
+  active: boolean;
+  onClick: () => void;
+  href?: string;
+}
+
+const TriggerBtn: React.FC<TriggerBtnProps> = ({
+  icon: Icon,
+  label,
+  value,
+  accent,
+  active,
+  onClick,
+}) => (
+  <button
+    onClick={onClick}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      padding: "13px 16px",
+      borderRadius: 14,
+      width: "100%",
+      textAlign: "left",
+      cursor: "pointer",
+      border: `1px solid ${active ? accent + "55" : "rgba(255,255,255,0.08)"}`,
+      background: active ? `${accent}10` : "rgba(255,255,255,0.03)",
+      transition: "all 0.25s",
+      position: "relative",
+      overflow: "hidden",
+    }}
+    aria-pressed={active}
+  >
+    {/* Left accent bar */}
+    <div
+      style={{
+        position: "absolute",
+        left: 0,
+        top: "15%",
+        bottom: "15%",
+        width: 3,
+        borderRadius: 2,
+        background: accent,
+        opacity: active ? 1 : 0,
+        transition: "opacity 0.25s",
+        boxShadow: `0 0 8px ${accent}`,
+      }}
+      aria-hidden="true"
+    />
+    <div
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 11,
+        flexShrink: 0,
+        background: `${accent}14`,
+        border: `1px solid ${accent}28`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transition: "transform 0.3s",
+        transform: active ? "scale(1.1) rotate(-5deg)" : "scale(1)",
+      }}
+    >
+      <Icon size={18} color={accent} />
+    </div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <p
+        style={{
+          fontSize: 10,
+          fontWeight: 600,
+          letterSpacing: "2px",
+          textTransform: "uppercase",
+          color: "rgba(200,200,240,0.38)",
+          fontFamily: "'DM Sans',sans-serif",
+          margin: "0 0 3px",
+        }}
+      >
+        {label}
+      </p>
+      <p
+        style={{
+          fontSize: 13,
+          fontWeight: 400,
+          color: active ? "#fff" : "rgba(220,220,245,0.7)",
+          fontFamily: "'Outfit',sans-serif",
+          margin: 0,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          transition: "color 0.25s",
+        }}
+      >
+        {value}
+      </p>
+    </div>
+    <ArrowUpRight
+      size={13}
+      color={accent}
+      style={{
+        opacity: active ? 1 : 0.3,
+        transition: "opacity 0.25s",
+        flexShrink: 0,
+      }}
+    />
+  </button>
+);
+
 // ─── Availability Widget ──────────────────────────────────────────────────────
-// Small inline card showing current status + avg response time
 
 const AvailabilityWidget: React.FC = () => (
   <motion.div
@@ -270,7 +1146,6 @@ const AvailabilityWidget: React.FC = () => (
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {/* Pulsing green dot */}
         <span
           style={{
             width: 8,
@@ -287,7 +1162,7 @@ const AvailabilityWidget: React.FC = () => (
             fontSize: 12,
             fontWeight: 600,
             color: "#34d399",
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "'DM Sans',sans-serif",
             letterSpacing: "0.5px",
           }}
         >
@@ -296,16 +1171,10 @@ const AvailabilityWidget: React.FC = () => (
       </div>
       <Zap size={14} color="#34d399" />
     </div>
-
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
       {(
         [
-          {
-            icon: Clock,
-            label: "Response time",
-            value: "< 24h",
-            accent: "#a78bfa",
-          },
+          { icon: Clock, label: "Response", value: "< 24h", accent: "#a78bfa" },
           {
             icon: CheckCircle2,
             label: "Status",
@@ -346,7 +1215,7 @@ const AvailabilityWidget: React.FC = () => (
           </div>
           <p
             style={{
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "'Syne',sans-serif",
               fontSize: 15,
               fontWeight: 700,
               color: "#fff",
@@ -362,7 +1231,7 @@ const AvailabilityWidget: React.FC = () => (
   </motion.div>
 );
 
-// ─── Input / Textarea ─────────────────────────────────────────────────────────
+// ─── Form Field ───────────────────────────────────────────────────────────────
 
 interface FieldProps {
   id: string;
@@ -396,15 +1265,14 @@ const Field: React.FC<FieldProps> = ({
   rows = 5,
 }) => {
   const [focused, setFocused] = useState(false);
-
-  const baseStyle: React.CSSProperties = {
+  const base: React.CSSProperties = {
     width: "100%",
     outline: "none",
     padding: "12px 16px",
     borderRadius: 12,
     fontSize: 14,
     fontWeight: 300,
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Outfit',sans-serif",
     color: "#fff",
     background: focused ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.03)",
     border: `1px solid ${focused ? "rgba(139,92,246,0.5)" : "rgba(255,255,255,0.08)"}`,
@@ -413,7 +1281,6 @@ const Field: React.FC<FieldProps> = ({
     backdropFilter: "blur(8px)",
     resize: "none" as const,
   };
-
   return (
     <motion.div variants={fadeUp}>
       <label
@@ -431,7 +1298,7 @@ const Field: React.FC<FieldProps> = ({
             fontWeight: 500,
             letterSpacing: "0.5px",
             color: "rgba(200,200,240,0.6)",
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "'DM Sans',sans-serif",
           }}
         >
           {label}
@@ -444,14 +1311,13 @@ const Field: React.FC<FieldProps> = ({
             style={{
               fontSize: 10,
               color: "rgba(200,200,240,0.3)",
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'DM Sans',sans-serif",
             }}
           >
             {hint}
           </span>
         )}
       </label>
-
       {multiline ? (
         <textarea
           id={id}
@@ -464,7 +1330,7 @@ const Field: React.FC<FieldProps> = ({
           required={required}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          style={{ ...baseStyle, display: "block" }}
+          style={{ ...base, display: "block" }}
         />
       ) : (
         <input
@@ -478,19 +1344,20 @@ const Field: React.FC<FieldProps> = ({
           required={required}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          style={baseStyle}
+          style={base}
         />
       )}
     </motion.div>
   );
 };
 
-// ─── Contact ──────────────────────────────────────────────────────────────────
+// ─── Contact Section ──────────────────────────────────────────────────────────
 
 const Contact: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-10%" });
 
+  const [screen, setScreen] = useState<PhoneScreen>("idle");
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
@@ -499,11 +1366,21 @@ const Contact: React.FC = () => {
   });
   const [status, setStatus] = useState<FormStatus>("idle");
 
+  // Dialer state
+  const dialerState = useDialer(screen === "dialing" || screen === "calling");
+
+  // Auto-advance dialing → calling
+  useEffect(() => {
+    if (dialerState.calling && screen === "dialing") setScreen("calling");
+  }, [dialerState.calling, screen]);
+
+  const handleTrigger = (next: PhoneScreen) => {
+    setScreen((prev) => (prev === next ? "idle" : next));
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  ) => setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -511,9 +1388,7 @@ const Contact: React.FC = () => {
       setStatus("error");
       return;
     }
-
     setStatus("loading");
-
     try {
       await emailjs.send(
         SERVICE_ID,
@@ -526,7 +1401,6 @@ const Contact: React.FC = () => {
         },
         PUBLIC_KEY,
       );
-
       await emailjs.send(
         SERVICE_ID,
         AUTO_REPLY_TEMPLATE,
@@ -537,7 +1411,6 @@ const Contact: React.FC = () => {
         },
         PUBLIC_KEY,
       );
-
       setStatus("success");
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch {
@@ -546,6 +1419,21 @@ const Contact: React.FC = () => {
   };
 
   const loading = status === "loading";
+
+  const SOCIAL_LINKS = [
+    {
+      icon: Github,
+      label: "GitHub",
+      href: "https://github.com/levi9111",
+      accent: "#e2e8f0",
+    },
+    {
+      icon: Linkedin,
+      label: "LinkedIn",
+      href: "https://www.linkedin.com/in/shanjid-ahmad-b77b5427b",
+      accent: "#60a5fa",
+    },
+  ];
 
   return (
     <>
@@ -559,127 +1447,141 @@ const Contact: React.FC = () => {
           background: transparent;
           overflow: visible;
         }
-
         #contact-section::before {
           content: '';
           position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
           background: linear-gradient(90deg, transparent, rgba(139,92,246,0.25), transparent);
           pointer-events: none;
         }
-
-        /* eyebrow */
+        .contact-inner {
+          position: relative; z-index: 1;
+          max-width: 1100px; margin: 0 auto; padding: 0 32px;
+        }
         .contact-eyebrow {
           display: inline-flex; align-items: center; gap: 10px;
           padding: 7px 16px; border-radius: 100px;
           border: 1px solid rgba(139,92,246,0.2);
-          background: rgba(5,3,15,0.5);
-          backdrop-filter: blur(12px);
+          background: rgba(5,3,15,0.5); backdrop-filter: blur(12px);
           font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
           color: rgba(167,139,250,0.85); margin-bottom: 20px;
         }
-        .contact-eyebrow::before {
-          content: ''; display: block; width: 20px; height: 1px;
-          background: rgba(139,92,246,0.5);
-        }
-
-        /* title */
+        .contact-eyebrow::before { content:''; display:block; width:20px; height:1px; background:rgba(139,92,246,0.5); }
         .contact-title {
           font-family: 'Instrument Serif', serif;
-          font-size: clamp(44px, 6.5vw, 76px);
+          font-size: clamp(40px, 6.5vw, 76px);
           line-height: 1.05; color: #fff; letter-spacing: -1.5px;
         }
         .contact-title-accent {
           font-style: italic;
-          background: linear-gradient(135deg, #a78bfa 0%, #818cf8 45%, #38bdf8 100%);
+          background: linear-gradient(135deg,#a78bfa 0%,#818cf8 45%,#38bdf8 100%);
           -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
           animation: contactHue 8s ease-in-out infinite;
         }
         @keyframes contactHue { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
-
-        /* divider */
         .contact-divider {
-          width: 64px; height: 1px; margin: 24px auto 0;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent);
-          position: relative;
+          width:64px; height:1px; margin:24px auto 0;
+          background:linear-gradient(90deg,transparent,rgba(139,92,246,0.6),transparent); position:relative;
         }
         .contact-divider::after {
-          content: ''; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
-          width: 4px; height: 4px; border-radius: 50%;
-          background: #a78bfa; box-shadow: 0 0 8px #a78bfa;
+          content:''; position:absolute; top:-2px; left:50%; transform:translateX(-50%);
+          width:4px; height:4px; border-radius:50%; background:#a78bfa; box-shadow:0 0 8px #a78bfa;
         }
 
-        /* availability dot pulse */
+        /* Main body grid */
+        .contact-body {
+          display: grid;
+          grid-template-columns: 1fr 1.3fr;
+          gap: 40px;
+          align-items: start;
+        }
+
+        /* Left panel: phone + triggers */
+        .contact-left {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        /* Phone + buttons side by side on desktop */
+        .contact-phone-row {
+          display: flex;
+          gap: 16px;
+          align-items: flex-start;
+        }
+        .contact-triggers {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        /* Animations */
         @keyframes contactDotPulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.4; transform: scale(1.5); }
+          0%,100% { opacity:1; transform:scale(1); }
+          50%      { opacity:0.4; transform:scale(1.5); }
+        }
+        @keyframes contactRipple {
+          0%   { transform:translate(-50%,-50%) scale(0.7); opacity:0.8; }
+          100% { transform:translate(-50%,-50%) scale(1);   opacity:0; }
+        }
+        @keyframes contactBlink {
+          0%,100% { opacity:1; }
+          50%      { opacity:0; }
         }
 
-        /* dark input placeholder */
+        /* Form */
         #contact-section input::placeholder,
-        #contact-section textarea::placeholder {
-          color: rgba(200,200,240,0.25);
-        }
+        #contact-section textarea::placeholder { color:rgba(200,200,240,0.25); }
         #contact-section input:disabled,
-        #contact-section textarea:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
+        #contact-section textarea:disabled { opacity:0.5; cursor:not-allowed; }
 
-        /* submit button */
         .contact-submit {
-          width: 100%; padding: 14px 24px; border-radius: 13px;
-          border: 1px solid rgba(139,92,246,0.4);
-          background: rgba(139,92,246,0.15);
-          color: rgba(200,180,255,0.95);
-          font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 500;
-          cursor: pointer; position: relative; overflow: hidden;
-          display: flex; align-items: center; justify-content: center; gap: 9px;
-          transition: background 0.25s, border-color 0.25s, color 0.25s,
-                      transform 0.2s, box-shadow 0.25s;
-          backdrop-filter: blur(12px);
-          letter-spacing: 0.3px;
+          width:100%; padding:14px 24px; border-radius:13px;
+          border:1px solid rgba(139,92,246,0.4);
+          background:rgba(139,92,246,0.15);
+          color:rgba(200,180,255,0.95);
+          font-family:'Outfit',sans-serif; font-size:15px; font-weight:500;
+          cursor:pointer; position:relative; overflow:hidden;
+          display:flex; align-items:center; justify-content:center; gap:9px;
+          transition:background 0.25s,border-color 0.25s,color 0.25s,transform 0.2s,box-shadow 0.25s;
+          backdrop-filter:blur(12px); letter-spacing:0.3px;
         }
         .contact-submit:hover:not(:disabled) {
-          background: rgba(139,92,246,0.28);
-          border-color: rgba(139,92,246,0.7);
-          color: #d4bbff;
-          transform: translateY(-2px);
-          box-shadow: 0 10px 36px rgba(139,92,246,0.25);
+          background:rgba(139,92,246,0.28); border-color:rgba(139,92,246,0.7);
+          color:#d4bbff; transform:translateY(-2px); box-shadow:0 10px 36px rgba(139,92,246,0.25);
         }
-        .contact-submit:disabled {
-          opacity: 0.6; cursor: not-allowed;
-        }
+        .contact-submit:disabled { opacity:0.6; cursor:not-allowed; }
         .contact-submit .sheen {
-          position: absolute; inset: 0;
-          background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.07) 50%, transparent 60%);
-          transform: translateX(-100%); transition: transform 0.65s ease;
+          position:absolute; inset:0;
+          background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.07) 50%,transparent 60%);
+          transform:translateX(-100%); transition:transform 0.65s ease;
         }
-        .contact-submit:hover:not(:disabled) .sheen { transform: translateX(100%); }
-
-        /* spin */
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .contact-submit:hover:not(:disabled) .sheen { transform:translateX(100%); }
+        @keyframes spin { to { transform:rotate(360deg); } }
         .contact-spinner {
-          width: 18px; height: 18px; border-radius: 50%;
-          border: 2px solid rgba(200,180,255,0.25);
-          border-top-color: rgba(200,180,255,0.9);
-          animation: spin 0.7s linear infinite;
+          width:18px; height:18px; border-radius:50%;
+          border:2px solid rgba(200,180,255,0.25); border-top-color:rgba(200,180,255,0.9);
+          animation:spin 0.7s linear infinite;
         }
 
-        @media (max-width: 768px) {
-          #contact-section { padding: 100px 0 80px; }
+        /* ── Responsive ── */
+        @media (max-width: 960px) {
+          .contact-body { grid-template-columns: 1fr; gap: 32px; }
+        }
+        @media (max-width: 640px) {
+          #contact-section { padding: 80px 0 72px; }
+          .contact-inner { padding: 0 16px; }
+          /* Stack phone above triggers */
+          .contact-phone-row { flex-direction: column; align-items: center; }
+          .contact-triggers { width: 100%; }
+        }
+        @media (max-width: 480px) {
+          .contact-name-email { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
       <section id="contact-section" ref={sectionRef}>
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1,
-            maxWidth: 1100,
-            margin: "0 auto",
-            padding: "0 24px",
-          }}
-        >
+        <div className="contact-inner">
           {/* ── Header ── */}
           <motion.div
             variants={stagger}
@@ -712,33 +1614,25 @@ const Contact: React.FC = () => {
             </motion.p>
           </motion.div>
 
-          {/* ── Two-column body ── */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1.35fr",
-              gap: 48,
-              alignItems: "start",
-            }}
-            className="contact-grid"
-          >
-            {/* ── Left: info + availability ── */}
+          {/* ── Body ── */}
+          <div className="contact-body">
+            {/* ── Left: phone widget + triggers + availability + social ── */}
             <motion.div
               variants={stagger}
               initial="hidden"
               animate={isInView ? "show" : "hidden"}
-              style={{ display: "flex", flexDirection: "column", gap: 14 }}
+              className="contact-left"
             >
+              {/* Sub-heading */}
               <motion.h3
                 variants={fadeUp}
                 style={{
-                  fontFamily: "'Instrument Serif', serif",
-                  fontSize: "clamp(22px, 3vw, 30px)",
+                  fontFamily: "'Instrument Serif',serif",
+                  fontSize: "clamp(20px,3vw,28px)",
                   fontWeight: 400,
-                  lineHeight: 1.2,
                   color: "#fff",
-                  letterSpacing: "-0.5px",
-                  marginBottom: 6,
+                  letterSpacing: "-0.4px",
+                  margin: 0,
                 }}
               >
                 Get in{" "}
@@ -762,25 +1656,52 @@ const Contact: React.FC = () => {
                   fontWeight: 300,
                   color: "rgba(190,190,220,0.45)",
                   lineHeight: 1.8,
-                  marginBottom: 8,
+                  margin: 0,
                 }}
               >
                 Open to freelance projects, full-time roles, and technical
                 consulting. Based in Chattogram — working globally.
               </motion.p>
 
-              {/* Contact cards */}
-              {CONTACT_ITEMS.map((item) => (
-                <ContactCard key={item.label} item={item} />
-              ))}
+              {/* Phone mockup + trigger buttons */}
+              <motion.div variants={fadeUp} className="contact-phone-row">
+                <PhoneMockup screen={screen} dialerState={dialerState} />
 
-              {/* Availability widget */}
+                <div className="contact-triggers">
+                  <TriggerBtn
+                    icon={Phone}
+                    label="WhatsApp"
+                    value="+880 1626 974685"
+                    accent="#34d399"
+                    active={screen === "dialing" || screen === "calling"}
+                    onClick={() => handleTrigger("dialing")}
+                  />
+                  <TriggerBtn
+                    icon={Mail}
+                    label="Email"
+                    value="shanjidahmad502@gmail.com"
+                    accent="#60a5fa"
+                    active={screen === "email"}
+                    onClick={() => handleTrigger("email")}
+                  />
+                  <TriggerBtn
+                    icon={MapPin}
+                    label="Location"
+                    value="Chattogram, Bangladesh"
+                    accent="#a78bfa"
+                    active={screen === "map"}
+                    onClick={() => handleTrigger("map")}
+                  />
+                </div>
+              </motion.div>
+
+              {/* Availability */}
               <AvailabilityWidget />
 
               {/* Social links */}
               <motion.div
                 variants={fadeUp}
-                style={{ display: "flex", gap: 10, marginTop: 4 }}
+                style={{ display: "flex", gap: 10 }}
               >
                 {SOCIAL_LINKS.map((s) => {
                   const Icon = s.icon;
@@ -797,7 +1718,7 @@ const Contact: React.FC = () => {
                         width: 44,
                         height: 44,
                         borderRadius: 12,
-                        border: `1px solid rgba(255,255,255,0.08)`,
+                        border: "1px solid rgba(255,255,255,0.08)",
                         background: "rgba(255,255,255,0.03)",
                         backdropFilter: "blur(8px)",
                         display: "flex",
@@ -806,7 +1727,7 @@ const Contact: React.FC = () => {
                         color: "rgba(200,200,240,0.55)",
                         textDecoration: "none",
                         transition:
-                          "border-color 0.25s, color 0.25s, background 0.25s",
+                          "border-color 0.25s,color 0.25s,background 0.25s",
                       }}
                       onMouseEnter={(e) => {
                         const el = e.currentTarget as HTMLElement;
@@ -834,7 +1755,6 @@ const Contact: React.FC = () => {
               initial="hidden"
               animate={isInView ? "show" : "hidden"}
             >
-              {/* Glass form card */}
               <div
                 style={{
                   padding: "36px 32px",
@@ -847,18 +1767,16 @@ const Contact: React.FC = () => {
                   overflow: "hidden",
                 }}
               >
-                {/* Top radial highlight */}
                 <div
                   style={{
                     position: "absolute",
                     inset: 0,
                     pointerEvents: "none",
                     background:
-                      "radial-gradient(ellipse at 50% -20%, rgba(139,92,246,0.1), transparent 65%)",
+                      "radial-gradient(ellipse at 50% -20%,rgba(139,92,246,0.1),transparent 65%)",
                   }}
                   aria-hidden="true"
                 />
-
                 <motion.form
                   onSubmit={handleSubmit}
                   noValidate
@@ -873,14 +1791,13 @@ const Contact: React.FC = () => {
                     zIndex: 1,
                   }}
                 >
-                  {/* Row: name + email */}
                   <div
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
                       gap: 16,
                     }}
-                    className="contact-name-email-row"
+                    className="contact-name-email"
                   >
                     <Field
                       id="name"
@@ -904,7 +1821,6 @@ const Contact: React.FC = () => {
                       disabled={loading}
                     />
                   </div>
-
                   <Field
                     id="subject"
                     name="subject"
@@ -915,7 +1831,6 @@ const Contact: React.FC = () => {
                     onChange={handleChange}
                     disabled={loading}
                   />
-
                   <Field
                     id="message"
                     name="message"
@@ -929,7 +1844,6 @@ const Contact: React.FC = () => {
                     disabled={loading}
                   />
 
-                  {/* Status messages */}
                   {status === "success" && (
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
@@ -957,7 +1871,6 @@ const Contact: React.FC = () => {
                       </p>
                     </motion.div>
                   )}
-
                   {status === "error" && (
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
@@ -988,7 +1901,6 @@ const Contact: React.FC = () => {
                     </motion.div>
                   )}
 
-                  {/* Submit */}
                   <motion.div variants={fadeUp}>
                     <button
                       type="submit"
@@ -1021,23 +1933,6 @@ const Contact: React.FC = () => {
               </div>
             </motion.div>
           </div>
-
-          {/* Responsive stacking */}
-          <style>{`
-            .contact-grid {
-              grid-template-columns: 1fr 1.35fr;
-            }
-            @media (max-width: 860px) {
-              .contact-grid {
-                grid-template-columns: 1fr;
-              }
-            }
-            @media (max-width: 520px) {
-              .contact-name-email-row {
-                grid-template-columns: 1fr !important;
-              }
-            }
-          `}</style>
         </div>
       </section>
     </>
