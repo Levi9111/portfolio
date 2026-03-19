@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { motion, useInView, Variants } from "framer-motion";
 import {
-  Code,
+  Code2,
   Zap,
   Rocket,
   Heart,
@@ -9,9 +9,48 @@ import {
   Target,
   Sparkles,
   ArrowRight,
+  GitBranch,
+  Globe,
+  Star,
 } from "lucide-react";
 
-// ─── Variants ──────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Skill {
+  readonly category: string;
+  readonly icon: React.ElementType;
+  readonly items: readonly string[];
+  readonly accent: string;
+  readonly glow: string;
+}
+
+interface Achievement {
+  readonly number: string;
+  readonly label: string;
+  readonly icon: React.ElementType;
+  readonly accent: string;
+}
+
+interface StoryItem {
+  readonly accent: string;
+  readonly bold: string;
+  readonly text: string;
+}
+
+interface ActivityProject {
+  readonly name: string;
+  readonly type: string;
+  readonly pct: string;
+  readonly color: string;
+  readonly delay: string;
+  readonly pulseDelay: string;
+}
+
+interface CommitDay {
+  readonly level: 0 | 1 | 2 | 3 | 4;
+}
+
+// ─── Variants ─────────────────────────────────────────────────────────────────
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 36, filter: "blur(6px)" },
@@ -38,6 +77,16 @@ const fadeLeft: Variants = {
   },
 };
 
+const fadeRight: Variants = {
+  hidden: { opacity: 0, x: 28, filter: "blur(4px)" },
+  show: {
+    opacity: 1,
+    x: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
 const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.88 },
   show: {
@@ -47,12 +96,21 @@ const scaleIn: Variants = {
   },
 };
 
-// ─── Data ──────────────────────────────────────────────────────────────────────
+const slideUp: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.34, 1.2, 0.64, 1] },
+  },
+};
 
-const skills = [
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
+const SKILLS: readonly Skill[] = [
   {
     category: "Frontend",
-    icon: Code,
+    icon: Code2,
     items: ["React", "TypeScript", "Next.js", "Tailwind CSS", "HTML5", "CSS3"],
     accent: "#60a5fa",
     glow: "rgba(96,165,250,0.15)",
@@ -72,7 +130,7 @@ const skills = [
     glow: "rgba(52,211,153,0.15)",
   },
   {
-    category: "Tools",
+    category: "Tools & DevOps",
     icon: Rocket,
     items: ["Git", "Vercel", "Jest", "Webpack", "Docker", "AWS"],
     accent: "#a78bfa",
@@ -85,49 +143,128 @@ const skills = [
     accent: "#f472b6",
     glow: "rgba(244,114,182,0.15)",
   },
-];
+] as const;
 
-const achievements = [
-  { number: "4+", label: "Years Experience", icon: Trophy, accent: "#a78bfa" },
-  {
-    number: "50+",
-    label: "Projects Completed",
-    icon: Target,
-    accent: "#60a5fa",
-  },
+const ACHIEVEMENTS: readonly Achievement[] = [
+  { number: "5+", label: "Years Experience", icon: Trophy, accent: "#a78bfa" },
+  { number: "60+", label: "Projects Shipped", icon: Target, accent: "#60a5fa" },
   {
     number: "99%",
     label: "Client Satisfaction",
     icon: Sparkles,
     accent: "#34d399",
   },
-];
+] as const;
 
-const story = [
+const STORY: readonly StoryItem[] = [
   {
     accent: "#a78bfa",
-    bold: "4 years of experience",
-    text: "in full-stack development. I specialize in building modern web applications using the MERN stack. My journey began with a fascination for how things work, which naturally led me to programming.",
+    bold: "5 years of full-stack mastery",
+    text: "building production-grade web applications. From small startups to scaling platforms, I've led end-to-end development using the MERN stack — architecting systems that handle real users and real data.",
   },
   {
     accent: "#60a5fa",
-    bold: "clean, maintainable code",
-    text: "and creating intuitive user experiences. When I'm not coding, you'll find me exploring new technologies or sharing knowledge with the developer community.",
+    bold: "performance-first engineering",
+    text: "is at the core of everything I write. I care deeply about clean architecture, type safety, and code that the next developer will actually thank you for. TDD, code reviews, and documentation aren't afterthoughts — they're the baseline.",
   },
   {
     accent: "#34d399",
-    bold: "scalable applications",
-    text: "with a focus on web performance optimization and modern JavaScript frameworks. Every project is an opportunity to push the craft further.",
+    bold: "shipping at speed without breaking things",
+    text: "is the real skill. CI/CD pipelines, Docker containers, cloud deployments on AWS and Vercel — I own the full lifecycle from local dev to production, and I keep iteration cycles tight.",
   },
-];
+] as const;
 
-// ─── Skill Tag ─────────────────────────────────────────────────────────────────
+const ACTIVITY_PROJECTS: readonly ActivityProject[] = [
+  {
+    name: "E-Commerce Platform",
+    type: "React · Node · MongoDB",
+    pct: "92%",
+    color: "#a78bfa",
+    delay: "0.3s",
+    pulseDelay: "0s",
+  },
+  {
+    name: "Task Manager App",
+    type: "Next.js · Socket.io",
+    pct: "78%",
+    color: "#60a5fa",
+    delay: "0.42s",
+    pulseDelay: "0.4s",
+  },
+  {
+    name: "Analytics Dashboard",
+    type: "Next.js · Python · ML",
+    pct: "65%",
+    color: "#34d399",
+    delay: "0.54s",
+    pulseDelay: "0.8s",
+  },
+  {
+    name: "Auth Microservice",
+    type: "Nest.js · JWT · Docker",
+    pct: "100%",
+    color: "#fbbf24",
+    delay: "0.66s",
+    pulseDelay: "1.2s",
+  },
+] as const;
 
-const SkillTag: React.FC<{ label: string; accent: string; glow: string }> = ({
-  label,
-  accent,
-  glow,
-}) => {
+// Commit graph: 7 cols × 5 rows = 35 days
+const COMMIT_GRID: readonly CommitDay[] = [
+  { level: 1 },
+  { level: 2 },
+  { level: 0 },
+  { level: 3 },
+  { level: 1 },
+  { level: 2 },
+  { level: 1 },
+  { level: 0 },
+  { level: 3 },
+  { level: 4 },
+  { level: 2 },
+  { level: 1 },
+  { level: 0 },
+  { level: 2 },
+  { level: 2 },
+  { level: 1 },
+  { level: 3 },
+  { level: 2 },
+  { level: 4 },
+  { level: 3 },
+  { level: 1 },
+  { level: 1 },
+  { level: 0 },
+  { level: 2 },
+  { level: 3 },
+  { level: 2 },
+  { level: 1 },
+  { level: 3 },
+  { level: 3 },
+  { level: 4 },
+  { level: 2 },
+  { level: 1 },
+  { level: 3 },
+  { level: 4 },
+  { level: 2 },
+] as const;
+
+const COMMIT_COLORS: Record<0 | 1 | 2 | 3 | 4, string> = {
+  0: "rgba(255,255,255,0.04)",
+  1: "rgba(167,139,250,0.25)",
+  2: "rgba(167,139,250,0.45)",
+  3: "rgba(167,139,250,0.7)",
+  4: "#a78bfa",
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+interface SkillTagProps {
+  label: string;
+  accent: string;
+  glow: string;
+}
+
+const SkillTag: React.FC<SkillTagProps> = ({ label, accent, glow }) => {
   const [hovered, setHovered] = useState(false);
   return (
     <motion.span
@@ -157,15 +294,23 @@ const SkillTag: React.FC<{ label: string; accent: string; glow: string }> = ({
   );
 };
 
-// ─── Stat Card ─────────────────────────────────────────────────────────────────
+// ─── Stat Card ────────────────────────────────────────────────────────────────
 
-const StatCard: React.FC<{
+interface StatCardProps {
   number: string;
   label: string;
   icon: React.ElementType;
   accent: string;
   index: number;
-}> = ({ number, label, icon: Icon, accent, index }) => {
+}
+
+const StatCard: React.FC<StatCardProps> = ({
+  number,
+  label,
+  icon: Icon,
+  accent,
+  index,
+}) => {
   const [hovered, setHovered] = useState(false);
   return (
     <motion.div
@@ -180,7 +325,6 @@ const StatCard: React.FC<{
         borderRadius: 20,
         textAlign: "center",
         cursor: "default",
-        // Glass over space — backdrop blur pulls in the star field
         border: `1px solid ${hovered ? accent + "44" : "rgba(255,255,255,0.07)"}`,
         background: hovered
           ? `radial-gradient(circle at 50% 0%, ${accent}12, rgba(5,3,15,0.55))`
@@ -191,7 +335,6 @@ const StatCard: React.FC<{
         overflow: "hidden",
       }}
     >
-      {/* Top glow line */}
       <div
         style={{
           position: "absolute",
@@ -249,27 +392,669 @@ const StatCard: React.FC<{
   );
 };
 
-// ─── About ─────────────────────────────────────────────────────────────────────
+// ─── Activity Widget ──────────────────────────────────────────────────────────
+// Inline developer dashboard card — no extra file needed
 
-const About = () => {
+const ActivityWidget: React.FC = () => {
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(widgetRef, { once: true, margin: "-5%" });
+
+  return (
+    <motion.div
+      ref={widgetRef}
+      variants={fadeRight}
+      initial="hidden"
+      animate={inView ? "show" : "hidden"}
+      className="w-full"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
+      {/* ── Main card ── */}
+      <div
+        style={{
+          background: "rgba(255,255,255,0.025)",
+          border: "0.5px solid rgba(167,139,250,0.18)",
+          borderRadius: 16,
+          overflow: "hidden",
+          position: "relative",
+        }}
+      >
+        {/* Radial highlight */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background:
+              "radial-gradient(ellipse at 65% 0%, rgba(120,80,255,0.1) 0%, transparent 65%)",
+          }}
+        />
+
+        {/* Chrome */}
+        <div
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            borderBottom: "0.5px solid rgba(255,255,255,0.06)",
+            padding: "9px 13px",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          {(["#ff5f57", "#ffbd2e", "#28c840"] as const).map((c) => (
+            <span
+              key={c}
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: c,
+                opacity: 0.7,
+                display: "block",
+              }}
+            />
+          ))}
+          <span
+            style={{
+              marginLeft: 6,
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.2)",
+            }}
+          >
+            shanjid.dev — activity
+          </span>
+          <div style={{ flex: 1 }} />
+          {/* Live pill */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              background: "rgba(34,197,94,0.1)",
+              border: "0.5px solid rgba(34,197,94,0.25)",
+              borderRadius: 999,
+              padding: "3px 8px",
+            }}
+          >
+            <span
+              className="animate-blink-dot"
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: "50%",
+                background: "#22c55e",
+                display: "block",
+              }}
+            />
+            <span
+              style={{
+                fontSize: 8,
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                color: "#22c55e",
+              }}
+            >
+              Active
+            </span>
+          </div>
+        </div>
+
+        {/* Dev identity strip */}
+        <motion.div
+          variants={slideUp}
+          style={{
+            padding: "10px 13px",
+            borderBottom: "0.5px solid rgba(255,255,255,0.05)",
+            display: "flex",
+            alignItems: "center",
+            gap: 9,
+          }}
+        >
+          <div
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg,#a78bfa,#818cf8)",
+              border: "1.5px solid #0a0a0f",
+              display: "grid",
+              placeContent: "center",
+              fontSize: 9,
+              fontWeight: 800,
+              color: "#fff",
+              flexShrink: 0,
+              boxShadow: "0 0 0 1px rgba(167,139,250,0.4)",
+            }}
+          >
+            S
+          </div>
+          <div
+            className="animate-connector-pulse"
+            style={{
+              width: 14,
+              height: 1,
+              background: "linear-gradient(to right,#a78bfa,#34d399)",
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ flex: 1 }}>
+            <p
+              style={{
+                fontSize: 8.5,
+                fontWeight: 600,
+                letterSpacing: "0.05em",
+                color: "rgba(255,255,255,0.55)",
+                margin: 0,
+              }}
+            >
+              Full-Stack Developer · 5 years
+            </p>
+            <p
+              style={{
+                fontSize: 7.5,
+                color: "rgba(255,255,255,0.2)",
+                letterSpacing: "0.04em",
+                marginTop: 1,
+              }}
+            >
+              MERN · TypeScript · Next.js · Docker
+            </p>
+          </div>
+          <span
+            className="animate-blink-dot-slow"
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: "#22c55e",
+              flexShrink: 0,
+              boxShadow: "0 0 5px rgba(34,197,94,0.6)",
+              display: "block",
+            }}
+          />
+        </motion.div>
+
+        {/* Specialty pills */}
+        <motion.div
+          variants={slideUp}
+          style={{
+            display: "flex",
+            gap: 5,
+            flexWrap: "wrap",
+            padding: "10px 13px",
+            borderBottom: "0.5px solid rgba(255,255,255,0.05)",
+          }}
+        >
+          {(
+            [
+              {
+                icon: "⚡",
+                label: "MERN Stack",
+                color: "#a78bfa",
+                bg: "rgba(167,139,250,0.08)",
+                border: "rgba(167,139,250,0.2)",
+              },
+              {
+                icon: "◉",
+                label: "TypeScript",
+                color: "#34d399",
+                bg: "rgba(52,211,153,0.08)",
+                border: "rgba(52,211,153,0.2)",
+              },
+              {
+                icon: "✦",
+                label: "Open to work",
+                color: "#fbbf24",
+                bg: "rgba(251,191,36,0.08)",
+                border: "rgba(251,191,36,0.2)",
+              },
+            ] as const
+          ).map((p) => (
+            <div
+              key={p.label}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                background: p.bg,
+                border: `0.5px solid ${p.border}`,
+                borderRadius: 999,
+                padding: "4px 9px",
+              }}
+            >
+              <span style={{ fontSize: 9 }}>{p.icon}</span>
+              <span
+                style={{
+                  fontSize: 8.5,
+                  fontWeight: 600,
+                  letterSpacing: "0.04em",
+                  color: p.color,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {p.label}
+              </span>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Headline stat */}
+        <motion.div
+          variants={slideUp}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "12px 13px",
+            borderBottom: "0.5px solid rgba(255,255,255,0.05)",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "'Syne',sans-serif",
+              fontSize: 30,
+              fontWeight: 800,
+              color: "#a78bfa",
+              letterSpacing: "-0.04em",
+              lineHeight: 1,
+            }}
+          >
+            5+
+          </span>
+          <div>
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "rgba(255,255,255,0.7)",
+                fontFamily: "'Syne',sans-serif",
+                letterSpacing: "-0.01em",
+                margin: 0,
+              }}
+            >
+              Years shipping
+            </p>
+            <p
+              style={{
+                fontSize: 9,
+                color: "rgba(255,255,255,0.22)",
+                letterSpacing: "0.04em",
+                marginTop: 2,
+              }}
+            >
+              Full-stack · Est. 2019
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Active projects */}
+        <div style={{ padding: "13px 13px 0" }}>
+          <p
+            style={{
+              fontSize: 8.5,
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.2)",
+              marginBottom: 8,
+            }}
+          >
+            Recent Projects
+          </p>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+              marginBottom: 13,
+            }}
+          >
+            {ACTIVITY_PROJECTS.map((p) => (
+              <motion.div
+                key={p.name}
+                variants={slideUp}
+                className="animate-slide-in-left"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "0.5px solid rgba(255,255,255,0.06)",
+                  borderRadius: 8,
+                  padding: "9px 10px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 9,
+                  animationDelay: p.delay,
+                  transition: "border-color 0.2s",
+                }}
+                whileHover={{ borderColor: "rgba(167,139,250,0.2)" }}
+              >
+                <span
+                  className="animate-pulse-dot"
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: p.color,
+                    boxShadow: `0 0 6px ${p.color}88`,
+                    flexShrink: 0,
+                    display: "block",
+                    animationDelay: p.pulseDelay,
+                  }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p
+                    style={{
+                      fontFamily: "'Syne',sans-serif",
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      color: "rgba(255,255,255,0.8)",
+                      letterSpacing: "-0.01em",
+                      margin: 0,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {p.name}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 8,
+                      color: "rgba(255,255,255,0.2)",
+                      marginTop: 1,
+                    }}
+                  >
+                    {p.type}
+                  </p>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                    gap: 3,
+                    flexShrink: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: p.color,
+                      fontFamily: "'Syne',sans-serif",
+                    }}
+                  >
+                    {p.pct}
+                  </span>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 2,
+                      borderRadius: 1,
+                      background: "rgba(255,255,255,0.06)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      className="animate-bar-grow"
+                      style={{
+                        height: "100%",
+                        width: p.pct,
+                        background: p.color,
+                        borderRadius: 1,
+                        animationDelay: `calc(${p.delay} + 0.3s)`,
+                      }}
+                      role="progressbar"
+                      aria-valuenow={parseInt(p.pct)}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Commit heatmap */}
+        <div style={{ padding: "0 13px 13px" }}>
+          <div
+            style={{
+              height: ".5px",
+              background: "rgba(255,255,255,0.05)",
+              marginBottom: 13,
+            }}
+          />
+          <p
+            style={{
+              fontSize: 8.5,
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.2)",
+              marginBottom: 8,
+            }}
+          >
+            Commit Activity
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(7,1fr)",
+              gap: 3,
+            }}
+          >
+            {COMMIT_GRID.map((day, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={inView ? { opacity: 1, scale: 1 } : {}}
+                transition={{
+                  delay: 0.6 + i * 0.018,
+                  duration: 0.35,
+                  ease: [0.34, 1.2, 0.64, 1],
+                }}
+                title={`Level ${day.level}`}
+                style={{
+                  height: 10,
+                  borderRadius: 2,
+                  background: COMMIT_COLORS[day.level],
+                  transition: "background 0.2s",
+                }}
+              />
+            ))}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: 6,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 7,
+                color: "rgba(255,255,255,0.2)",
+                letterSpacing: "0.04em",
+              }}
+            >
+              5 weeks
+            </span>
+            <span
+              style={{
+                fontSize: 7,
+                color: "rgba(255,255,255,0.2)",
+                letterSpacing: "0.04em",
+              }}
+            >
+              today
+            </span>
+          </div>
+        </div>
+
+        {/* Code quality ring */}
+        <div style={{ padding: "0 13px 14px" }}>
+          <div
+            style={{
+              height: ".5px",
+              background: "rgba(255,255,255,0.05)",
+              marginBottom: 13,
+            }}
+          />
+          <p
+            style={{
+              fontSize: 8.5,
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.2)",
+              marginBottom: 10,
+            }}
+          >
+            Code Quality
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              className="animate-float"
+              style={{
+                position: "relative",
+                width: 44,
+                height: 44,
+                flexShrink: 0,
+              }}
+            >
+              <svg
+                width="44"
+                height="44"
+                viewBox="0 0 44 44"
+                style={{ transform: "rotate(-90deg)" }}
+                aria-hidden="true"
+              >
+                <circle
+                  cx="22"
+                  cy="22"
+                  r="14"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.06)"
+                  strokeWidth="3"
+                />
+                <circle
+                  cx="22"
+                  cy="22"
+                  r="14"
+                  fill="none"
+                  stroke="#a78bfa"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  className="animate-spin-arc"
+                  style={{ strokeDasharray: 88 }}
+                />
+              </svg>
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "grid",
+                  placeContent: "center",
+                  fontFamily: "'Syne',sans-serif",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: "#a78bfa",
+                }}
+              >
+                92%
+              </div>
+            </div>
+            <div>
+              <p
+                style={{
+                  fontFamily: "'Syne',sans-serif",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "rgba(255,255,255,0.8)",
+                  letterSpacing: "-0.01em",
+                  marginBottom: 2,
+                }}
+              >
+                Test coverage rate
+              </p>
+              <p
+                style={{
+                  fontSize: 8.5,
+                  color: "rgba(255,255,255,0.22)",
+                  lineHeight: 1.5,
+                }}
+              >
+                Avg. PR review 24h
+                <br />
+                Clean code · Documented
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating availability tag */}
+      <motion.div
+        variants={slideUp}
+        style={{
+          marginTop: 11,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 7,
+          background: "rgba(10,5,28,0.9)",
+          border: "0.5px solid rgba(167,139,250,0.2)",
+          borderRadius: 999,
+          padding: "8px 18px",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        <span
+          className="animate-blink-dot-slow"
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: "#22c55e",
+            boxShadow: "0 0 6px rgba(34,197,94,0.7)",
+            display: "block",
+          }}
+        />
+        <span
+          style={{
+            fontSize: 11,
+            color: "rgba(255,255,255,0.5)",
+            letterSpacing: "0.04em",
+          }}
+        >
+          Available for work
+        </span>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// ─── About ────────────────────────────────────────────────────────────────────
+
+const About: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-10%" });
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500&family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
 
         #about-section {
           font-family: 'Outfit', sans-serif;
           position: relative;
           padding: 140px 0 120px;
-          /* Fully transparent — SpaceBackground canvas shows through */
           background: transparent;
           overflow: visible;
         }
 
-        /* Subtle top separator line */
         #about-section::before {
           content: '';
           position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
@@ -277,6 +1062,7 @@ const About = () => {
           pointer-events: none;
         }
 
+        /* ── Eyebrow ── */
         .about-eyebrow {
           display: inline-flex; align-items: center; gap: 10px;
           padding: 7px 16px; border-radius: 100px;
@@ -291,6 +1077,7 @@ const About = () => {
           background: rgba(139,92,246,0.5);
         }
 
+        /* ── Title ── */
         .about-title {
           font-family: 'Instrument Serif', serif;
           font-size: clamp(48px, 7vw, 80px);
@@ -304,6 +1091,7 @@ const About = () => {
         }
         @keyframes hueAbout { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
 
+        /* ── Divider ── */
         .about-divider {
           width: 64px; height: 1px; margin: 24px auto 0;
           background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent);
@@ -315,6 +1103,7 @@ const About = () => {
           background: #a78bfa; box-shadow: 0 0 8px #a78bfa;
         }
 
+        /* ── Story ── */
         .story-item {
           position: relative; padding-left: 24px;
           font-size: 15px; font-weight: 300;
@@ -331,6 +1120,7 @@ const About = () => {
         }
         @keyframes dotring { 0%,100%{transform:scale(1);opacity:.25} 50%{transform:scale(1.6);opacity:0} }
 
+        /* ── CTA button ── */
         .about-cta {
           position: relative; display: inline-flex; align-items: center; gap: 10px;
           padding: 14px 28px; border-radius: 14px;
@@ -354,20 +1144,19 @@ const About = () => {
         }
         .about-cta:hover .sheen { transform: translateX(100%); }
 
-        /* Skill group — glass panels floating over stars */
+        /* ── Skill groups ── */
         .skill-group {
           padding: 20px 24px; border-radius: 18px;
           border: 1px solid rgba(255,255,255,0.06);
           background: rgba(5,3,15,0.42);
           backdrop-filter: blur(14px);
-          WebkitBackdropFilter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
           transition: border-color 0.3s, background 0.3s;
         }
         .skill-group:hover {
           border-color: rgba(255,255,255,0.1);
           background: rgba(5,3,15,0.55);
         }
-
         .skill-cat-icon {
           width: 38px; height: 38px; border-radius: 10px;
           display: flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -378,6 +1167,7 @@ const About = () => {
           color: rgba(200,200,240,0.5);
         }
 
+        /* ── Responsive ── */
         @media (max-width: 768px) {
           #about-section { padding: 100px 0 80px; }
         }
@@ -388,12 +1178,12 @@ const About = () => {
           style={{
             position: "relative",
             zIndex: 1,
-            maxWidth: 1100,
+            maxWidth: 1200,
             margin: "0 auto",
             padding: "0 24px",
           }}
         >
-          {/* ── Header ── */}
+          {/* ── Section header ────────────────────────────────── */}
           <motion.div
             variants={stagger}
             initial="hidden"
@@ -411,7 +1201,7 @@ const About = () => {
             </motion.div>
           </motion.div>
 
-          {/* ── Stat Cards ── */}
+          {/* ── Stat cards ────────────────────────────────────── */}
           <motion.div
             variants={stagger}
             initial="hidden"
@@ -420,24 +1210,25 @@ const About = () => {
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
               gap: 16,
-              marginBottom: 80,
+              marginBottom: 88,
             }}
           >
-            {achievements.map((a, i) => (
+            {ACHIEVEMENTS.map((a, i) => (
               <StatCard key={a.label} {...a} index={i} />
             ))}
           </motion.div>
 
-          {/* ── Body ── */}
+          {/* ── Three-column body: story | skills | widget ─────── */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-              gap: 64,
+              gridTemplateColumns: "1fr 1fr 300px",
+              gap: 40,
               alignItems: "start",
             }}
+            className="about-body-grid"
           >
-            {/* Story */}
+            {/* ── Story ────────────────────────────────────────── */}
             <motion.div
               variants={stagger}
               initial="hidden"
@@ -447,7 +1238,7 @@ const About = () => {
                 variants={fadeUp}
                 style={{
                   fontFamily: "'Instrument Serif', serif",
-                  fontSize: "clamp(28px, 4vw, 40px)",
+                  fontSize: "clamp(26px, 3.5vw, 38px)",
                   fontWeight: 400,
                   lineHeight: 1.2,
                   color: "#fff",
@@ -455,7 +1246,7 @@ const About = () => {
                   marginBottom: 32,
                 }}
               >
-                Crafting Digital{" "}
+                Five years of{" "}
                 <span
                   style={{
                     fontStyle: "italic",
@@ -465,7 +1256,7 @@ const About = () => {
                     backgroundClip: "text",
                   }}
                 >
-                  Experiences
+                  shipping
                 </span>
               </motion.h3>
 
@@ -478,7 +1269,7 @@ const About = () => {
                   marginBottom: 40,
                 }}
               >
-                {story.map(({ accent, bold, text }, i) => (
+                {STORY.map(({ accent, bold, text }, i) => (
                   <motion.div
                     key={i}
                     variants={fadeLeft}
@@ -503,6 +1294,80 @@ const About = () => {
                 ))}
               </motion.div>
 
+              {/* Quick-fire stats row */}
+              <motion.div
+                variants={fadeUp}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3,1fr)",
+                  gap: 12,
+                  marginBottom: 36,
+                  padding: "16px",
+                  borderRadius: 14,
+                  background: "rgba(255,255,255,0.025)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  backdropFilter: "blur(12px)",
+                }}
+              >
+                {(
+                  [
+                    {
+                      icon: GitBranch,
+                      value: "1.2k+",
+                      label: "Commits",
+                      color: "#a78bfa",
+                    },
+                    {
+                      icon: Globe,
+                      value: "8+",
+                      label: "Countries",
+                      color: "#60a5fa",
+                    },
+                    {
+                      icon: Star,
+                      value: "340+",
+                      label: "GitHub ★",
+                      color: "#fbbf24",
+                    },
+                  ] as const
+                ).map(({ icon: Icon, value, label, color }) => (
+                  <div key={label} style={{ textAlign: "center" }}>
+                    <Icon
+                      size={14}
+                      color={color}
+                      style={{ margin: "0 auto 6px", display: "block" }}
+                    />
+                    <p
+                      style={{
+                        fontFamily: "'Syne', sans-serif",
+                        fontSize: 18,
+                        fontWeight: 800,
+                        color: "#fff",
+                        letterSpacing: "-0.03em",
+                        margin: "0 0 2px",
+                        background: `linear-gradient(135deg,#fff,${color})`,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      {value}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 10,
+                        letterSpacing: "2px",
+                        textTransform: "uppercase",
+                        color: "rgba(180,180,210,0.35)",
+                        margin: 0,
+                      }}
+                    >
+                      {label}
+                    </p>
+                  </div>
+                ))}
+              </motion.div>
+
               <motion.div variants={fadeUp}>
                 <button
                   className="about-cta"
@@ -520,7 +1385,7 @@ const About = () => {
               </motion.div>
             </motion.div>
 
-            {/* Skills */}
+            {/* ── Skills ───────────────────────────────────────── */}
             <motion.div
               variants={stagger}
               initial="hidden"
@@ -530,7 +1395,7 @@ const About = () => {
                 variants={fadeUp}
                 style={{
                   fontFamily: "'Instrument Serif', serif",
-                  fontSize: "clamp(24px, 3vw, 34px)",
+                  fontSize: "clamp(22px, 3vw, 32px)",
                   fontWeight: 400,
                   lineHeight: 1.2,
                   color: "#fff",
@@ -538,7 +1403,7 @@ const About = () => {
                   marginBottom: 28,
                 }}
               >
-                Skills &{" "}
+                Stack &{" "}
                 <span
                   style={{
                     fontStyle: "italic",
@@ -548,7 +1413,7 @@ const About = () => {
                     backgroundClip: "text",
                   }}
                 >
-                  Technologies
+                  Tools
                 </span>
               </motion.h3>
 
@@ -556,7 +1421,7 @@ const About = () => {
                 variants={stagger}
                 style={{ display: "flex", flexDirection: "column", gap: 14 }}
               >
-                {skills.map((group) => {
+                {SKILLS.map((group) => {
                   const Icon = group.icon;
                   return (
                     <motion.div
@@ -601,7 +1466,36 @@ const About = () => {
                 })}
               </motion.div>
             </motion.div>
+
+            {/* ── Activity Widget ───────────────────────────────── */}
+            <ActivityWidget />
           </div>
+
+          {/* Responsive: stack columns on smaller screens */}
+          <style>{`
+            .about-body-grid {
+              grid-template-columns: 1fr 1fr 300px;
+            }
+            @media (max-width: 1100px) {
+              .about-body-grid {
+                grid-template-columns: 1fr 1fr;
+              }
+              .about-body-grid > *:last-child {
+                grid-column: 1 / -1;
+                max-width: 360px;
+                margin: 0 auto;
+              }
+            }
+            @media (max-width: 680px) {
+              .about-body-grid {
+                grid-template-columns: 1fr;
+              }
+              .about-body-grid > *:last-child {
+                grid-column: auto;
+                max-width: 100%;
+              }
+            }
+          `}</style>
         </div>
       </section>
     </>
