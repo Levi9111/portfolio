@@ -1,5 +1,4 @@
 import React, { useRef } from "react";
-import { useInView } from "framer-motion";
 import {
   ArrowUpRight,
   Globe,
