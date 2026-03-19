@@ -1,3 +1,4 @@
+// TODO: Here the widget needs to be separated into a different component
 import React, { useState, useRef } from "react";
 import { motion, useInView, Variants } from "framer-motion";
 import {
