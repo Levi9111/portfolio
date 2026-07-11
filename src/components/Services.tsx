@@ -287,125 +287,51 @@ const Services: React.FC = () => {
   const isInView = useInView(sectionRef, { once: true, margin: "-10%" });
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
-
-        #services-section {
-          font-family: 'Outfit', sans-serif;
-          position: relative;
-          padding: 140px 0 120px;
-          background: transparent;
-          overflow: visible;
-        }
-        #services-section::before {
-          content: '';
-          position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.25), transparent);
-          pointer-events: none;
-        }
-
-        .svc-eyebrow {
-          display: inline-flex; align-items: center; gap: 10px;
-          padding: 7px 16px; border-radius: 100px;
-          border: 1px solid rgba(139,92,246,0.2);
-          background: rgba(5,3,15,0.5);
-          backdrop-filter: blur(12px);
-          font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
-          color: rgba(167,139,250,0.85); margin-bottom: 20px;
-        }
-        .svc-eyebrow::before {
-          content: ''; display: block; width: 20px; height: 1px;
-          background: rgba(139,92,246,0.5);
-        }
-
-        .svc-title {
-          font-family: 'Instrument Serif', serif;
-          font-size: clamp(44px, 7vw, 76px);
-          line-height: 1.05; color: #fff; letter-spacing: -1.5px;
-        }
-        .svc-title-accent {
-          font-style: italic;
-          background: linear-gradient(135deg, #a78bfa 0%, #818cf8 45%, #38bdf8 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-          animation: svcHue 8s ease-in-out infinite;
-        }
-        @keyframes svcHue { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
-
-        .svc-divider {
-          width: 64px; height: 1px; margin: 24px auto 0;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent);
-          position: relative;
-        }
-        .svc-divider::after {
-          content: ''; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
-          width: 4px; height: 4px; border-radius: 50%;
-          background: #a78bfa; box-shadow: 0 0 8px #a78bfa;
-        }
-
-        .svc-desc {
-          font-size: 15px; font-weight: 300;
-          color: rgba(190,190,220,0.45); max-width: 520px;
-          line-height: 1.8; margin: 20px auto 0;
-        }
-
-        .svc-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-          gap: 24px;
-        }
-
-        @media (max-width: 768px) {
-          #services-section { padding: 100px 0 80px; }
-        }
-      `}</style>
-
-      <section id="services-section" ref={sectionRef}>
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1,
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "0 24px",
-          }}
+    <section id="services-section" ref={sectionRef}>
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "0 24px",
+        }}
+      >
+        {/* Header */}
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          style={{ textAlign: "center", marginBottom: 64 }}
         >
-          {/* Header */}
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate={isInView ? "show" : "hidden"}
-            style={{ textAlign: "center", marginBottom: 64 }}
-          >
-            <motion.div variants={fadeUp}>
-              <div className="svc-eyebrow">What I Offer</div>
-            </motion.div>
-            <motion.h2 className="svc-title" variants={fadeUp}>
-              Services & <span className="svc-title-accent">Expertise</span>
-            </motion.h2>
-            <motion.div variants={fadeUp}>
-              <div className="svc-divider" />
-            </motion.div>
-            <motion.p className="svc-desc" variants={fadeUp}>
-              From single applications to multi-app ecosystems — full ownership
-              of the stack, or a focused piece of a larger team.
-            </motion.p>
+          <motion.div variants={fadeUp}>
+            <div className="svc-eyebrow">What I Offer</div>
           </motion.div>
+          <motion.h2 className="svc-title" variants={fadeUp}>
+            Services & <span className="svc-title-accent">Expertise</span>
+          </motion.h2>
+          <motion.div variants={fadeUp}>
+            <div className="svc-divider" />
+          </motion.div>
+          <motion.p className="svc-desc" variants={fadeUp}>
+            From single applications to multi-app ecosystems — full ownership
+            of the stack, or a focused piece of a larger team.
+          </motion.p>
+        </motion.div>
 
-          {/* Grid */}
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate={isInView ? "show" : "hidden"}
-            className="svc-grid"
-          >
-            {SERVICES.map((service, i) => (
-              <ServiceCard key={service.id} service={service} index={i} />
-            ))}
-          </motion.div>
-        </div>
-      </section>
-    </>
+        {/* Grid */}
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          className="svc-grid"
+        >
+          {SERVICES.map((service, i) => (
+            <ServiceCard key={service.id} service={service} index={i} />
+          ))}
+        </motion.div>
+      </div>
+    </section>
   );
 };
 

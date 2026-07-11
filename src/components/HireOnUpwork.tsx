@@ -65,41 +65,6 @@ const HireOnUpwork: React.FC = () => {
   const [hovered, setHovered] = useState(false);
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
-
-        #upwork-section {
-          font-family: 'Outfit', sans-serif;
-          position: relative;
-          padding: 100px 0;
-          background: transparent;
-          overflow: visible;
-        }
-        #upwork-section::before {
-          content: '';
-          position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(20,184,110,0.25), transparent);
-          pointer-events: none;
-        }
-
-        @keyframes upworkPulseRing {
-          0% { transform: scale(1); opacity: 0.5; }
-          100% { transform: scale(1.9); opacity: 0; }
-        }
-        @keyframes upworkDotBlink {
-          0%,100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
-
-        .upwork-card { position: relative; }
-        @media (max-width: 860px) {
-          .upwork-card-inner { grid-template-columns: 1fr !important; text-align: center; }
-          .upwork-card-inner .upwork-highlights { align-items: center !important; }
-          .upwork-card-inner .upwork-highlights li { justify-content: center; }
-        }
-      `}</style>
-
       <section id="upwork-section" ref={sectionRef}>
         <div
           style={{
@@ -374,7 +339,6 @@ const HireOnUpwork: React.FC = () => {
           </motion.div>
         </div>
       </section>
-    </>
   );
 };
 
