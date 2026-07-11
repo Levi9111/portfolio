@@ -1,0 +1,58 @@
+# Shanjid Ahmad — Full-Stack Developer
+
+> Personal portfolio site for Shanjid Ahmad, a full-stack web developer with 5+ years of experience building production-grade applications using React, Next.js, Node.js, NestJS, MongoDB, and PostgreSQL.
+
+## About
+
+Shanjid Ahmad is a Bangladeshi full-stack developer and co-founder of UIX Design Lab, a web design and development agency. He specializes in building multi-app ecosystems, REST and WebSocket APIs, e-commerce platforms, and open-source developer tooling.
+
+- **Location:** Bangladesh
+- **GitHub:** https://github.com/levi9111
+- **Upwork:** https://www.upwork.com/freelancers/~0170afa1a35aac844c
+- **Email:** shanjidahmad502@gmail.com
+- **LinkedIn:** https://www.linkedin.com/in/shanjid-ahmad
+
+## Featured Projects
+
+### Texor — Crypto Trading Platform
+Full-featured cryptocurrency exchange platform with real-time market data, wallet integration, and secure trading infrastructure. Built with React, Node.js, MongoDB, WebSocket, JWT, and Redis. Role: Lead Full-Stack Engineer. Status: Live at texor.cloud.
+
+### UIX Design Lab — Agency Website
+Co-founder and developer of a web design agency platform featuring an admin ERP dashboard and a public-facing client site. Built with Next.js, TypeScript, Framer Motion, Tailwind CSS, and GSAP. Status: Live at uixdesignlab.com.
+
+### Subaashghor — E-commerce Ecosystem
+Four-app commerce ecosystem (web storefront, admin ERP, API server, mobile app) for a luxury goods retailer. Built with React, Node.js, MongoDB, Stripe, and AWS. Role: Full-Stack Architect. Status: In Production.
+
+### create-express-modular — Open-Source CLI
+npm-published CLI scaffolding tool that generates modular Express.js/NestJS backend projects with pre-configured authentication, Zod validation, Mongoose modeling, and CI/CD setup. 1 NPM package, MIT licensed. GitHub: https://github.com/levi9111/npm-create-express-modular
+
+### TaskFlow — Real-Time Task Management Platform
+Full-stack collaborative task management platform with WebSocket-based real-time updates, Kanban board UI, NestJS backend, Redis caching, and PostgreSQL. GitHub: https://github.com/Levi9111/task-master-api
+
+## Technical Stack
+
+**Frontend:** React, Next.js, TypeScript, Tailwind CSS, Framer Motion, GSAP, HTML5, CSS3  
+**Backend:** Node.js, Express.js, NestJS, REST APIs, WebSocket (Socket.io)  
+**Databases:** MongoDB, Mongoose, PostgreSQL  
+**Tools:** Git, Docker, AWS, Vercel, Jest, Webpack, Zod, JWT  
+**Design:** Figma, Responsive Design, Accessibility
+
+## Engineering Principles
+
+- Strict TypeScript across the full stack with Zod schema validation at every request boundary
+- Consistent error handling via catchAsync, AppError class, and unified sendResponse shape
+- Modular architecture by default — features are self-contained with their own routes, controllers, and schemas
+- GPU-safe animations with Framer Motion, respecting `useReducedMotion`
+- Test coverage, documentation, and code reviews treated as part of shipping, not cleanup
+
+## Services
+
+- Full-Stack Web Applications (React / Next.js frontends + Node.js/NestJS APIs)
+- API Architecture & Backend Systems
+- E-commerce Platforms (storefront + admin + payment integration)
+- Open-Source Tooling (CLIs, scaffolding generators, npm packages)
+
+## Optional
+
+- llms.txt: https://shanjidahmad.com/llms.txt
+- sitemap: https://shanjidahmad.com/sitemap.xml
