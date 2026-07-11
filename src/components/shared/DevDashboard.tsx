@@ -723,6 +723,7 @@ const DevDashboard: React.FC<DevDashboardProps> = ({
           <span
             className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0 animate-blink-dot-slow"
             style={{ boxShadow: "0 0 5px rgba(34,197,94,0.6)" }}
+            role="img"
             aria-label="Currently online"
           />
         </div>
