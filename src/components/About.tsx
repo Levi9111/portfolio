@@ -552,22 +552,22 @@ const About: React.FC = () => {
                 {(
                   [
                     {
-                      icon: GitBranch,
-                      value: "1.2k+",
-                      label: "Commits",
+                      icon: Target,
+                      value: "SOLID",
+                      label: "Architecture",
                       color: "#a78bfa",
                     },
                     {
-                      icon: Globe,
-                      value: "8+",
-                      label: "Countries",
+                      icon: Zap,
+                      value: "95%+",
+                      label: "Performance",
                       color: "#60a5fa",
                     },
                     {
-                      icon: Star,
-                      value: "340+",
-                      label: "GitHub ★",
-                      color: "#fbbf24",
+                      icon: Sparkles,
+                      value: "Typesafe",
+                      label: "By Design",
+                      color: "#34d399",
                     },
                   ] as const
                 ).map(({ icon: Icon, value, label, color }) => (
