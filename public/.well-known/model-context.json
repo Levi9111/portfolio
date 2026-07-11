@@ -1,0 +1,32 @@
+{
+  "mcpVersion": "2024-11-05",
+  "tools": [
+    {
+      "name": "send_contact_message",
+      "description": "Send a message or inquiry to Shanjid Ahmad (e.g. asking to work together or hire him).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Sender's full name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Sender's email address for replies"
+          },
+          "subject": {
+            "type": "string",
+            "description": "The subject/topic of the inquiry"
+          },
+          "message": {
+            "type": "string",
+            "description": "The full message or inquiry content"
+          }
+        },
+        "required": ["name", "email", "message"]
+      }
+    }
+  ]
+}

@@ -22,6 +22,7 @@ interface FieldProps {
   required?: boolean;
   multiline?: boolean;
   rows?: number;
+  toolparamdescription?: string;
 }
 
 const Field: React.FC<FieldProps> = ({
@@ -37,6 +38,7 @@ const Field: React.FC<FieldProps> = ({
   required,
   multiline,
   rows = 4,
+  toolparamdescription,
 }) => {
   const [focused, setFocused] = useState(false);
   const base: React.CSSProperties = {
@@ -105,6 +107,7 @@ const Field: React.FC<FieldProps> = ({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           style={{ ...base, display: "block" }}
+          {...({ toolparamdescription } as any)}
         />
       ) : (
         <input
@@ -119,6 +122,7 @@ const Field: React.FC<FieldProps> = ({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           style={base}
+          {...({ toolparamdescription } as any)}
         />
       )}
     </motion.div>
@@ -278,6 +282,10 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
           initial="hidden"
           animate={isInView ? "show" : "hidden"}
           style={{ display: "flex", flexDirection: "column", gap: 16 }}
+          {...({
+            toolname: "send_contact_message",
+            tooldescription: "Send a contact form message or project inquiry directly to Shanjid Ahmad."
+          } as any)}
         >
           <div
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}
@@ -292,6 +300,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
               value={formData.name}
               onChange={handleChange}
               disabled={loading}
+              toolparamdescription="Sender's full name"
             />
             <Field
               id="email"
@@ -303,6 +312,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
               value={formData.email}
               onChange={handleChange}
               disabled={loading}
+              toolparamdescription="Sender's email address for replies"
             />
           </div>
           <Field
@@ -314,6 +324,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
             value={formData.subject}
             onChange={handleChange}
             disabled={loading}
+            toolparamdescription="The topic or subject line of the message"
           />
           <Field
             id="message"
@@ -326,6 +337,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
             value={formData.message}
             onChange={handleChange}
             disabled={loading}
+            toolparamdescription="The full content of the message or message details"
           />
 
           {status === "success" && (
