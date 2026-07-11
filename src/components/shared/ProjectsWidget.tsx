@@ -305,6 +305,7 @@ const ProjectsWidget: React.FC = () => {
               boxShadow: "0 0 5px rgba(34,197,94,0.6)",
               display: "block",
             }}
+            role="img"
             aria-label="Online"
           />
         </div>

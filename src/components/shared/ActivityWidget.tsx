@@ -630,6 +630,7 @@ const ActivityWidget: React.FC = () => {
               display: "block",
               animation: "statusPulse 2s ease-in-out infinite",
             }}
+            role="img"
             aria-label="Online"
           />
         </div>

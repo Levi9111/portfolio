@@ -778,6 +778,7 @@ const DevDashboard: React.FC<DevDashboardProps> = ({
               fontSize: 30,
               letterSpacing: "-0.04em",
             }}
+            role="img"
             aria-label={`${years} plus years`}
           >
             {years}+
@@ -938,6 +939,7 @@ const DevDashboard: React.FC<DevDashboardProps> = ({
               <div
                 className="absolute inset-0 grid place-content-center font-black text-[#a78bfa]"
                 style={{ fontFamily: "'Syne', sans-serif", fontSize: 11 }}
+                role="img"
                 aria-label={`${quality} percent test coverage`}
               >
                 {quality}%

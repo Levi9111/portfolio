@@ -278,6 +278,7 @@ const PlanVisual: React.FC<{ seen: boolean }> = ({ seen }) => (
       background: "rgba(0,0,0,0.25)",
       border: "0.5px solid rgba(255,255,255,0.06)",
     }}
+    role="img"
     aria-label="Planning artefacts"
   >
     {/* Scanline — only renders after seen, position:relative on parent clips it */}
@@ -434,6 +435,7 @@ const DeployVisual: React.FC<{ seen: boolean }> = ({ seen }) => {
         background: "rgba(0,0,0,0.25)",
         border: "0.5px solid rgba(255,255,255,0.06)",
       }}
+      role="img"
       aria-label="Deployment successful"
     >
       {/* Pulsing checkmark */}
@@ -502,6 +504,7 @@ const ContributionHeatmap: React.FC<{ seen: boolean }> = ({ seen }) => {
         animationDelay: "1.8s",
         opacity: seen ? undefined : 0,
       }}
+      role="img"
       aria-label="GitHub contribution activity"
     >
       {/* Header */}
