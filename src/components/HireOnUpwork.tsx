@@ -1,6 +1,6 @@
 // src/components/HireOnUpwork.tsx
 import React, { useRef, useState } from "react";
-import { Star, CheckCircle2, ArrowUpRight, Zap } from "lucide-react";
+import { CheckCircle2, ArrowUpRight, Zap } from "lucide-react";
 import { motion, useInView, Variants } from "framer-motion";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
