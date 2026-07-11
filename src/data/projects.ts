@@ -51,12 +51,12 @@ export const PROJECTS: readonly Project[] = [
     links: [
       {
         label: "Client Repo",
-        href: "https://github.com/levi9111/uix-client",
+        href: "https://github.com/levi9111/UIX-Design-Lab",
         type: "client",
       },
       {
         label: "Server Repo",
-        href: "https://github.com/levi9111/uix-server",
+        href: "https://github.com/levi9111/server-uix-design-lab  ",
         type: "server",
       },
     ],
@@ -85,22 +85,22 @@ export const PROJECTS: readonly Project[] = [
     links: [
       {
         label: "Web Client",
-        href: "https://github.com/levi9111/subaashghor-client",
+        href: "https://github.com/Levi9111/project-subaashghor-client",
         type: "client",
       },
       {
         label: "Server",
-        href: "https://github.com/levi9111/subaashghor-server",
+        href: "https://github.com/Levi9111/project-subasshghor-server",
         type: "server",
       },
       {
         label: "Admin Dashboard",
-        href: "https://github.com/levi9111/subaashghor-admin",
+        href: "https://github.com/Levi9111/   project-subashghor-dashboard",
         type: "admin",
       },
       {
         label: "Mobile App",
-        href: "https://github.com/levi9111/subaashghor-mobile",
+        href: "https://github.com/Levi9111/Subaashghor-mobile-",
         type: "mobile",
       },
     ],
@@ -129,7 +129,7 @@ export const PROJECTS: readonly Project[] = [
     links: [
       {
         label: "GitHub Repo",
-        href: "https://github.com/levi9111/create-express-modular",
+        href: "https://github.com/levi9111/npm-create-express-modular",
         type: "github",
       },
     ],
@@ -157,12 +157,12 @@ export const PROJECTS: readonly Project[] = [
     links: [
       {
         label: "Backend API",
-        href: "https://github.com/levi9111/taskflow-backend",
+        href: "https://github.com/Levi9111/task-master-api",
         type: "server",
       },
       {
         label: "Web Client",
-        href: "https://github.com/levi9111/taskflow-client",
+        href: "https://github.com/Levi9111/task-master",
         type: "client",
       },
     ],
