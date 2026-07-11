@@ -5,6 +5,8 @@ import Projects from "./components/Projects";
 import Contact from "./components/Contact";
 import Footer from "./components/Footer";
 import SpaceBackground from "./components/shared/SpaceBackground";
+import Services from "./components/Services";
+import TechPhilosophy from "./components/TechPhilosophy";
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
         <main>
           <Hero />
           <About />
+          <Services />
+          <TechPhilosophy />
           <Projects />
           <Contact />
         </main>

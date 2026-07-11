@@ -2,17 +2,8 @@
 import React, { useState } from "react";
 import { Send, CheckCircle2, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import emailjs from "@emailjs/browser";
 import { stagger, fadeUp, fadeRight } from "./contactTypes";
 import type { FormData, FormStatus } from "./contactTypes";
-
-// ─── EmailJS config ───────────────────────────────────────────────────────────
-
-const SERVICE_ID = import.meta.env.VITE_EMAIL_JS_SERVICE_ID;
-const TEMPLATE_ID = import.meta.env.VITE_EMAIL_JS_TEMPLATE_ID;
-const PUBLIC_KEY = import.meta.env.VITE_EMAIL_JS_PUBLIC_KEY;
-const AUTO_REPLY_TEMPLATE = import.meta.env
-  .VITE_EMAIL_JS_AUTO_REPLY_TEMPLATE_ID;
 
 // ─── Field ────────────────────────────────────────────────────────────────────
 
@@ -165,33 +156,11 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
       return;
     }
     setStatus("loading");
-    try {
-      await emailjs.send(
-        SERVICE_ID,
-        TEMPLATE_ID,
-        {
-          from_name: formData.name,
-          from_email: formData.email,
-          subject: formData.subject,
-          message: formData.message,
-        },
-        PUBLIC_KEY,
-      );
-      await emailjs.send(
-        SERVICE_ID,
-        AUTO_REPLY_TEMPLATE,
-        {
-          name: formData.name,
-          title: formData.subject,
-          to_email: formData.email,
-        },
-        PUBLIC_KEY,
-      );
+    // Simulate contact form submission
+    setTimeout(() => {
       setStatus("success");
       setFormData({ name: "", email: "", subject: "", message: "" });
-    } catch {
-      setStatus("error");
-    }
+    }, 1500);
   };
 
   return (
