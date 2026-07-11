@@ -196,6 +196,7 @@ const StatusIcon: React.FC<{
       <span
         className="w-2.5 h-2.5 rounded-full shrink-0 grid place-content-center"
         style={{ background: "rgba(52,211,153,0.2)" }}
+        role="img"
         aria-label="Pass"
       >
         <svg width="7" height="7" viewBox="0 0 8 8" aria-hidden="true">
@@ -218,6 +219,7 @@ const StatusIcon: React.FC<{
           background: `rgba(251,191,36,${running && blink ? "0.35" : "0.15"})`,
           transition: "background 0.3s",
         }}
+        role="img"
         aria-label="Running"
       >
         <svg width="7" height="7" viewBox="0 0 8 8" aria-hidden="true">
@@ -239,6 +241,7 @@ const StatusIcon: React.FC<{
     <span
       className="w-2.5 h-2.5 rounded-full shrink-0 grid place-content-center"
       style={{ background: "rgba(239,68,68,0.2)" }}
+      role="img"
       aria-label="Fail"
     >
       <svg width="7" height="7" viewBox="0 0 8 8" aria-hidden="true">
