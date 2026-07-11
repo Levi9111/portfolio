@@ -49,7 +49,7 @@ const TITLES: readonly string[] = [
 
 const STATS: readonly StatItem[] = [
   { value: "5+", label: "Years" },
-  { value: "60+", label: "Projects" },
+  { value: "30+", label: "Projects" },
   { value: "MERN", label: "Stack" },
   { value: "∞", label: "Curiosity" },
 ] as const;

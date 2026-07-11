@@ -21,7 +21,6 @@ function App() {
           <About />
           <Projects />
           <Contact />
-          {/* <RocketLaunch /> */}
         </main>
         <Footer />
       </div>

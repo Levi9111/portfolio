@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,15 +19,72 @@ interface TechPill {
   readonly borderAlpha: string;
 }
 
-interface Commit {
-  readonly hash: string;
-  readonly msg: string;
-  readonly branch: string;
-  readonly color: string;
-  readonly time: string;
+// Live commit shape from GitHub Events API
+interface GitHubEvent {
+  type: string;
+  repo: { name: string };
+  payload: {
+    commits?: { sha: string; message: string }[];
+    ref?: string;
+  };
+  created_at: string;
 }
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+interface Commit {
+  hash: string;
+  msg: string;
+  branch: string;
+  repo: string;
+  color: string;
+  time: string;
+}
+
+// ─── Config — edit these two lines ───────────────────────────────────────────
+//
+// GITHUB_USERNAME  — your GitHub username (public, no auth needed)
+// GITHUB_TOKEN     — optional Personal Access Token for higher rate limits
+//                    (60 req/hr unauthenticated → 5000/hr with token)
+//                    If using a token, store it in your env and inject via
+//                    your build tool — never hard-code it here in production.
+//
+//   Vite:    import.meta.env.VITE_GITHUB_TOKEN
+//   Next.js: process.env.NEXT_PUBLIC_GITHUB_TOKEN
+//
+// Both GITHUB_USERNAME and NEXT_PUBLIC_GITHUB_TOKEN can also be passed as
+// props — see the component signature below.
+
+const DEFAULT_USERNAME = "levi9111"; // ← replace with your username
+const POLL_INTERVAL_MS = 60_000; // re-fetch every 60 s
+
+// Branch colour mapping — extend as you like
+const BRANCH_COLOR: Record<string, string> = {
+  main: "#34d399",
+  master: "#34d399",
+  develop: "#60a5fa",
+  dev: "#60a5fa",
+  hotfix: "#f472b6",
+  feature: "#a78bfa",
+  test: "#fbbf24",
+  chore: "#94a3b8",
+};
+const DEFAULT_COLOR = "#a78bfa";
+
+function branchColor(branch: string): string {
+  for (const [key, color] of Object.entries(BRANCH_COLOR)) {
+    if (branch.toLowerCase().includes(key)) return color;
+  }
+  return DEFAULT_COLOR;
+}
+
+function relativeTime(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+// ─── Static data (unchanged from original) ───────────────────────────────────
 
 const PROJECTS: readonly Project[] = [
   {
@@ -88,73 +145,115 @@ const TECH_PILLS: readonly TechPill[] = [
   },
 ] as const;
 
-const COMMITS: readonly Commit[] = [
-  {
-    hash: "a3f9c12",
-    msg: "feat: add auth middleware",
-    branch: "main",
-    color: "#34d399",
-    time: "just now",
-  },
-  {
-    hash: "b7e2d45",
-    msg: "fix: resolve CORS on /api/v2",
-    branch: "hotfix",
-    color: "#f472b6",
-    time: "1m ago",
-  },
-  {
-    hash: "c1a8f67",
-    msg: "perf: lazy load dashboard chunks",
-    branch: "main",
-    color: "#34d399",
-    time: "3m ago",
-  },
-  {
-    hash: "d4b3e90",
-    msg: "feat: stripe webhook handler",
-    branch: "feature",
-    color: "#a78bfa",
-    time: "6m ago",
-  },
-  {
-    hash: "e9c5a23",
-    msg: "chore: upgrade Next.js 14",
-    branch: "main",
-    color: "#34d399",
-    time: "12m ago",
-  },
-  {
-    hash: "f2d7b56",
-    msg: "test: unit tests for auth module",
-    branch: "test",
-    color: "#fbbf24",
-    time: "18m ago",
-  },
-  {
-    hash: "g6e1c89",
-    msg: "fix: mobile nav z-index overflow",
-    branch: "hotfix",
-    color: "#f472b6",
-    time: "24m ago",
-  },
-  {
-    hash: "h8a4d12",
-    msg: "feat: real-time notifications",
-    branch: "feature",
-    color: "#a78bfa",
-    time: "31m ago",
-  },
-] as const;
+// ─── GitHub hook ──────────────────────────────────────────────────────────────
 
-// ─── Hooks ────────────────────────────────────────────────────────────────────
+interface UseGitHubCommitsOptions {
+  username: string;
+  token?: string;
+  maxCommits?: number;
+  pollMs?: number;
+}
+
+type FetchStatus = "idle" | "loading" | "success" | "error" | "rate-limited";
+
+function useGitHubCommits({
+  username,
+  token,
+  maxCommits = 8,
+  pollMs = POLL_INTERVAL_MS,
+}: UseGitHubCommitsOptions): {
+  commits: Commit[];
+  status: FetchStatus;
+  lastUpdated: Date | null;
+  refetch: () => void;
+} {
+  const [commits, setCommits] = useState<Commit[]>([]);
+  const [status, setStatus] = useState<FetchStatus>("idle");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [tick, setTick] = useState(0); // bumped to trigger re-fetch
+
+  const refetch = useCallback(() => setTick((t) => t + 1), []);
+
+  useEffect(() => {
+    if (!username) return;
+    let cancelled = false;
+
+    const headers: HeadersInit = { Accept: "application/vnd.github+json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const run = async () => {
+      setStatus("loading");
+      try {
+        // GitHub Events API — returns up to 300 public events, no auth needed
+        // Docs: https://docs.github.com/en/rest/activity/events
+        const res = await fetch(
+          `https://api.github.com/users/${username}/events/public?per_page=100`,
+          { headers },
+        );
+
+        if (res.status === 403 || res.status === 429) {
+          if (!cancelled) setStatus("rate-limited");
+          return;
+        }
+        if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+
+        const events: GitHubEvent[] = await res.json();
+
+        // Filter to PushEvents only and flatten commits
+        const parsed: Commit[] = [];
+        for (const ev of events) {
+          if (ev.type !== "PushEvent") continue;
+          const rawBranch = (ev.payload.ref ?? "refs/heads/main").replace(
+            "refs/heads/",
+            "",
+          );
+          const color = branchColor(rawBranch);
+          const repoShort = ev.repo.name.split("/")[1] ?? ev.repo.name;
+
+          for (const c of ev.payload.commits ?? []) {
+            // Skip merge commits and bot commits
+            if (c.message.startsWith("Merge ")) continue;
+            parsed.push({
+              hash: c.sha.slice(0, 7),
+              msg: c.message.split("\n")[0].slice(0, 72), // first line, max 72 chars
+              branch: rawBranch,
+              repo: repoShort,
+              color,
+              time: relativeTime(ev.created_at),
+            });
+            if (parsed.length >= maxCommits) break;
+          }
+          if (parsed.length >= maxCommits) break;
+        }
+
+        if (!cancelled) {
+          setCommits(parsed);
+          setStatus(parsed.length === 0 ? "success" : "success");
+          setLastUpdated(new Date());
+        }
+      } catch {
+        if (!cancelled) setStatus("error");
+      }
+    };
+
+    run();
+    const id = setInterval(run, pollMs);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [username, token, maxCommits, pollMs, tick]);
+
+  return { commits, status, lastUpdated, refetch };
+}
+
+// ─── Hooks (same as original) ─────────────────────────────────────────────────
 
 function useInView(
   threshold = 0.15,
 ): [React.RefObject<HTMLDivElement>, boolean] {
   const ref = useRef<HTMLDivElement>(null);
   const [seen, setSeen] = useState(false);
-
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -170,36 +269,7 @@ function useInView(
     obs.observe(el);
     return () => obs.disconnect();
   }, [threshold]);
-
   return [ref, seen];
-}
-
-function useCommitStream(seen: boolean, intervalMs = 2400): Commit[] {
-  const [visible, setVisible] = useState<Commit[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [idx, setIdx] = useState(0);
-
-  // Seed first 2 on reveal
-  useEffect(() => {
-    if (!seen) return;
-    setVisible([...COMMITS].slice(0, 2));
-    setIdx(2);
-  }, [seen]);
-
-  // Rotate one commit in every interval
-  useEffect(() => {
-    if (!seen) return;
-    const t = setInterval(() => {
-      setIdx((i) => {
-        const next = i % COMMITS.length;
-        setVisible((prev) => [COMMITS[next], ...prev].slice(0, 4));
-        return next + 1;
-      });
-    }, intervalMs);
-    return () => clearInterval(t);
-  }, [seen, intervalMs]);
-
-  return visible;
 }
 
 function useTypewriter(
@@ -209,7 +279,6 @@ function useTypewriter(
   startDelay = 700,
 ): string {
   const [display, setDisplay] = useState("");
-
   useEffect(() => {
     if (!seen) return;
     let i = 0;
@@ -224,11 +293,9 @@ function useTypewriter(
     }, startDelay);
     return () => clearTimeout(delay);
   }, [text, seen, speed, startDelay]);
-
   return display;
 }
 
-// Count-up number hook
 function useCountUp(
   target: number,
   seen: boolean,
@@ -236,7 +303,6 @@ function useCountUp(
   delay = 400,
 ): number {
   const [val, setVal] = useState(0);
-
   useEffect(() => {
     if (!seen) return;
     let raf: number;
@@ -255,13 +321,12 @@ function useCountUp(
       cancelAnimationFrame(raf);
     };
   }, [target, seen, duration, delay]);
-
   return val;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-const LivePill: React.FC = () => (
+const LivePill: React.FC<{ label?: string }> = ({ label = "Active" }) => (
   <div
     className="flex items-center gap-1 rounded-full px-2 py-0.5"
     style={{
@@ -277,25 +342,21 @@ const LivePill: React.FC = () => (
       className="text-green-400 font-semibold tracking-widest"
       style={{ fontSize: 8, fontFamily: "'DM Sans', sans-serif" }}
     >
-      Active
+      {label}
     </span>
   </div>
 );
-
-// ─── ProjectRow ───────────────────────────────────────────────────────────────
 
 interface ProjectRowProps {
   project: Project;
   seen: boolean;
   barDelay: string;
 }
-
 const ProjectRow: React.FC<ProjectRowProps> = ({ project, seen, barDelay }) => {
   const [hovered, setHovered] = useState(false);
-
   return (
     <div
-      className="animate-slide-in-left flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all duration-200"
+      className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-all duration-200"
       style={{
         background: hovered ? `${project.color}0d` : "rgba(255,255,255,0.03)",
         border: `0.5px solid ${hovered ? project.color + "33" : "rgba(255,255,255,0.06)"}`,
@@ -305,18 +366,14 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, seen, barDelay }) => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Pulsing dot */}
       <span
-        className="w-1.5 h-1.5 rounded-full shrink-0 animate-pulse-dot"
+        className="w-1.5 h-1.5 rounded-full shrink-0"
         style={{
           background: project.color,
           boxShadow: `0 0 6px ${project.color}88`,
-          animationDelay: project.pulsDelay,
         }}
         aria-hidden="true"
       />
-
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <p
           className="truncate font-bold text-white/80"
@@ -335,8 +392,6 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, seen, barDelay }) => {
           {project.type}
         </p>
       </div>
-
-      {/* Percentage + bar */}
       <div className="flex flex-col items-end gap-0.5 shrink-0">
         <span
           className="font-bold"
@@ -373,13 +428,10 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, seen, barDelay }) => {
   );
 };
 
-// ─── CommitRow ────────────────────────────────────────────────────────────────
-
 interface CommitRowProps {
   commit: Commit;
   isNew: boolean;
 }
-
 const CommitRow: React.FC<CommitRowProps> = ({ commit, isNew }) => (
   <div
     className="flex items-start gap-2 px-2 py-1.5 rounded-md transition-all duration-150"
@@ -391,7 +443,6 @@ const CommitRow: React.FC<CommitRowProps> = ({ commit, isNew }) => (
       border: `0.5px solid ${isNew ? commit.color + "20" : "transparent"}`,
     }}
   >
-    {/* Branch color pip */}
     <span
       className="w-1.5 h-1.5 rounded-full shrink-0 mt-1"
       style={{
@@ -411,7 +462,7 @@ const CommitRow: React.FC<CommitRowProps> = ({ commit, isNew }) => (
       >
         {commit.msg}
       </p>
-      <div className="flex items-center gap-1.5 mt-0.5">
+      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
         <span
           style={{
             fontFamily: "'DM Sans', sans-serif",
@@ -426,38 +477,138 @@ const CommitRow: React.FC<CommitRowProps> = ({ commit, isNew }) => (
           className="text-white/20"
           style={{ fontSize: 7.5, fontFamily: "'DM Sans', sans-serif" }}
         >
-          · {commit.hash} · {commit.time}
+          · {commit.repo} · {commit.hash} · {commit.time}
         </span>
       </div>
     </div>
   </div>
 );
 
+// Skeleton row while loading
+const CommitSkeleton: React.FC<{ index: number }> = ({ index }) => (
+  <div
+    className="flex items-start gap-2 px-2 py-1.5 rounded-md"
+    style={{ opacity: 1 - index * 0.2 }}
+  >
+    <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-1 bg-white/10 animate-pulse" />
+    <div className="flex-1 space-y-1.5">
+      <div
+        className="h-2 rounded bg-white/10 animate-pulse"
+        style={{ width: `${70 - index * 8}%` }}
+      />
+      <div
+        className="h-1.5 rounded bg-white/[0.06] animate-pulse"
+        style={{ width: `${45 - index * 5}%` }}
+      />
+    </div>
+  </div>
+);
+
+// Status badge shown below the commit list
+const CommitStatusBadge: React.FC<{
+  status: FetchStatus;
+  lastUpdated: Date | null;
+  onRetry: () => void;
+}> = ({ status, lastUpdated, onRetry }) => {
+  if (status === "success" && lastUpdated) {
+    return (
+      <p
+        className="text-white/20 text-center"
+        style={{ fontSize: 7.5, fontFamily: "'DM Sans', sans-serif" }}
+      >
+        Updated {relativeTime(lastUpdated.toISOString())} · GitHub Events API
+      </p>
+    );
+  }
+  if (status === "rate-limited") {
+    return (
+      <div className="flex items-center justify-center gap-1.5">
+        <p
+          className="text-yellow-400/60"
+          style={{ fontSize: 7.5, fontFamily: "'DM Sans', sans-serif" }}
+        >
+          Rate limited — add a GitHub token for 5000 req/hr
+        </p>
+        <button
+          onClick={onRetry}
+          className="text-white/40 underline"
+          style={{ fontSize: 7.5 }}
+        >
+          retry
+        </button>
+      </div>
+    );
+  }
+  if (status === "error") {
+    return (
+      <div className="flex items-center justify-center gap-1.5">
+        <p
+          className="text-red-400/60"
+          style={{ fontSize: 7.5, fontFamily: "'DM Sans', sans-serif" }}
+        >
+          Could not reach GitHub API
+        </p>
+        <button
+          onClick={onRetry}
+          className="text-white/40 underline"
+          style={{ fontSize: 7.5 }}
+        >
+          retry
+        </button>
+      </div>
+    );
+  }
+  return null;
+};
+
 // ─── Main component ───────────────────────────────────────────────────────────
+//
+// Props:
+//   username  — GitHub username (overrides DEFAULT_USERNAME constant above)
+//   token     — GitHub PAT for higher rate limits (optional)
+//               Recommended: inject via env var, not hard-coded.
 
-const DevDashboard: React.FC = () => {
+interface DevDashboardProps {
+  username?: string;
+  token?: string;
+}
+
+const DevDashboard: React.FC<DevDashboardProps> = ({
+  username = DEFAULT_USERNAME,
+  token,
+}) => {
   const [ref, seen] = useInView(0.15);
-  const commits = useCommitStream(seen, 2400);
-  const prevLen = useRef(0);
-  const years = useCountUp(2, seen, 900, 500);
+  const years = useCountUp(5, seen, 900, 500);
   const quality = useCountUp(92, seen, 1100, 700);
-
-  // Terminal title typewriter
-  const termText = useTypewriter("shanjid@studio:~/projects", seen, 42, 300);
-
-  // Cursor blink after typewriter finishes
+  const termText = useTypewriter(
+    `${username}@studio:~/projects`,
+    seen,
+    42,
+    300,
+  );
   const [showCursor, setShowCursor] = useState(true);
+
   useEffect(() => {
     const t = setInterval(() => setShowCursor((c) => !c), 530);
     return () => clearInterval(t);
   }, []);
 
+  // ── Live GitHub commits ──────────────────────────────────────────────────────
+  const { commits, status, lastUpdated, refetch } = useGitHubCommits({
+    username,
+    token,
+    maxCommits: 8,
+    pollMs: POLL_INTERVAL_MS,
+  });
+
+  // Animate new commits in by tracking previous count
+  const prevCountRef = useRef(0);
   useEffect(() => {
-    prevLen.current = commits.length;
+    prevCountRef.current = commits.length;
   }, [commits.length]);
 
-  // Arc stroke offset: 88 = 0%, 7 = 92%
   const arcOffset = seen ? 7 : 88;
+  const isLoading = status === "loading" || status === "idle";
 
   return (
     <div
@@ -482,7 +633,7 @@ const DevDashboard: React.FC = () => {
           aria-hidden="true"
         />
 
-        {/* Subtle scan line */}
+        {/* Scan line */}
         {seen && (
           <div
             className="absolute left-0 right-0 h-px pointer-events-none z-10 animate-scan-x"
@@ -491,7 +642,7 @@ const DevDashboard: React.FC = () => {
           />
         )}
 
-        {/* ── Chrome ─────────────────────────────────────────── */}
+        {/* ── Chrome ── */}
         <div
           className="flex items-center gap-1.5 px-3.5 py-2.5"
           style={{
@@ -499,19 +650,14 @@ const DevDashboard: React.FC = () => {
             borderBottom: "0.5px solid rgba(255,255,255,0.06)",
           }}
         >
-          <span
-            className="w-1.5 h-1.5 rounded-full opacity-70 bg-[#ff5f57]"
-            aria-hidden="true"
-          />
-          <span
-            className="w-1.5 h-1.5 rounded-full opacity-70 bg-[#ffbd2e]"
-            aria-hidden="true"
-          />
-          <span
-            className="w-1.5 h-1.5 rounded-full opacity-70 bg-[#28c840]"
-            aria-hidden="true"
-          />
-          {/* Typewriter terminal title */}
+          {(["#ff5f57", "#ffbd2e", "#28c840"] as const).map((c, i) => (
+            <span
+              key={i}
+              className="w-1.5 h-1.5 rounded-full opacity-70"
+              style={{ background: c }}
+              aria-hidden="true"
+            />
+          ))}
           <span
             className="ml-1.5 font-semibold text-white/25"
             style={{
@@ -535,7 +681,7 @@ const DevDashboard: React.FC = () => {
           <LivePill />
         </div>
 
-        {/* ── Developer strip ─────────────────────────────────── */}
+        {/* ── Developer strip ── */}
         <div
           className="flex items-center gap-2.5 px-3.5 py-2.5 animate-fade-up-sm"
           style={{
@@ -551,18 +697,15 @@ const DevDashboard: React.FC = () => {
               fontSize: 9,
               boxShadow: "0 0 0 1px rgba(52,211,153,0.4)",
             }}
-            aria-label="Shanjid's avatar"
+            aria-label={`${username}'s avatar`}
           >
-            S
+            {username.charAt(0).toUpperCase()}
           </div>
-
-          {/* Animated connector — pulses between green and purple */}
           <div
             className="w-4 h-px shrink-0 animate-connector-pulse"
             style={{ background: "linear-gradient(to right,#34d399,#a78bfa)" }}
             aria-hidden="true"
           />
-
           <div className="flex-1">
             <p
               className="font-semibold tracking-[0.05em] text-white/55"
@@ -577,7 +720,6 @@ const DevDashboard: React.FC = () => {
               MERN · TypeScript · Next.js
             </p>
           </div>
-
           <span
             className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0 animate-blink-dot-slow"
             style={{ boxShadow: "0 0 5px rgba(34,197,94,0.6)" }}
@@ -585,7 +727,7 @@ const DevDashboard: React.FC = () => {
           />
         </div>
 
-        {/* ── Tech pills ──────────────────────────────────────── */}
+        {/* ── Tech pills ── */}
         <div
           className="flex flex-wrap gap-1.5 px-3.5 py-2.5 animate-fade-up-sm"
           style={{
@@ -620,7 +762,7 @@ const DevDashboard: React.FC = () => {
           ))}
         </div>
 
-        {/* ── Stat strip — count-up ───────────────────────────── */}
+        {/* ── Stat strip ── */}
         <div
           className="flex items-center gap-2.5 px-3.5 py-3 animate-count-tick"
           style={{
@@ -654,12 +796,12 @@ const DevDashboard: React.FC = () => {
               className="text-white/[0.22] tracking-[0.04em] mt-0.5"
               style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9 }}
             >
-              Full-stack · Est. 2022
+              Full-stack · Est. 2021
             </p>
           </div>
         </div>
 
-        {/* ── Body ────────────────────────────────────────────── */}
+        {/* ── Body ── */}
         <div className="p-3.5">
           {/* Active projects */}
           <p
@@ -668,7 +810,6 @@ const DevDashboard: React.FC = () => {
           >
             Active Projects
           </p>
-
           <div className="flex flex-col gap-1.5 mb-3.5">
             {PROJECTS.map((project) => (
               <ProjectRow
@@ -680,77 +821,84 @@ const DevDashboard: React.FC = () => {
             ))}
           </div>
 
-          {/* Divider */}
           <div
             className="h-px mb-3.5"
             style={{ background: "rgba(255,255,255,0.05)" }}
           />
 
-          {/* Live commit stream */}
+          {/* ── Live commit stream — GitHub API ── */}
           <div className="flex items-center justify-between mb-2">
-            <p
-              className="font-semibold tracking-[0.1em] uppercase text-white/20"
-              style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 8.5 }}
-            >
-              Recent Commits
-            </p>
-            <div
-              className="flex items-center gap-1 rounded-full px-1.5 py-0.5"
-              style={{
-                background: "rgba(34,197,94,0.08)",
-                border: "0.5px solid rgba(34,197,94,0.2)",
-              }}
-            >
-              <span
-                className="w-1 h-1 rounded-full bg-green-400 animate-blink-dot"
-                aria-hidden="true"
-              />
-              <span
-                className="text-green-400"
-                style={{
-                  fontSize: 7,
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: 600,
-                  letterSpacing: "0.06em",
-                }}
+            <div className="flex items-center gap-1.5">
+              <p
+                className="font-semibold tracking-[0.1em] uppercase text-white/20"
+                style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 8.5 }}
               >
-                LIVE
-              </span>
+                Recent Commits
+              </p>
+              {/* Clickable link to profile */}
+              <a
+                href={`https://github.com/${username}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/20 hover:text-white/50 transition-colors"
+                style={{ fontSize: 7.5, fontFamily: "'DM Sans', sans-serif" }}
+                title={`View ${username} on GitHub`}
+              >
+                ↗
+              </a>
             </div>
+            <LivePill label={isLoading ? "…" : "LIVE"} />
           </div>
 
-          <div
-            className="flex flex-col gap-0.5 mb-3.5"
-            style={{ minHeight: 80 }}
-          >
-            {commits.map((commit, i) => (
-              <CommitRow
-                key={`${commit.hash}-${i}`}
-                commit={commit}
-                isNew={i === 0}
-              />
-            ))}
+          {/* Commit list or skeletons */}
+          <div className="flex flex-col gap-0.5 mb-2" style={{ minHeight: 80 }}>
+            {isLoading ? (
+              Array.from({ length: 4 }, (_, i) => (
+                <CommitSkeleton key={i} index={i} />
+              ))
+            ) : commits.length > 0 ? (
+              commits.map((commit, i) => (
+                <CommitRow
+                  key={`${commit.hash}-${i}`}
+                  commit={commit}
+                  isNew={i === 0 && commits.length > prevCountRef.current}
+                />
+              ))
+            ) : (
+              <p
+                className="text-white/20 text-center py-4"
+                style={{ fontSize: 8.5, fontFamily: "'DM Sans', sans-serif" }}
+              >
+                No recent push events found for @{username}
+              </p>
+            )}
           </div>
 
-          {/* Divider */}
+          {/* Status footer */}
+          <div className="mb-3.5">
+            <CommitStatusBadge
+              status={status}
+              lastUpdated={lastUpdated}
+              onRetry={refetch}
+            />
+          </div>
+
           <div
             className="h-px mb-3.5"
             style={{ background: "rgba(255,255,255,0.05)" }}
           />
 
-          {/* Code quality arc — count-up + animated arc */}
+          {/* Code quality arc */}
           <p
             className="font-semibold tracking-[0.1em] uppercase text-white/20 mb-2"
             style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 8.5 }}
           >
             Code Quality
           </p>
-
           <div
             className="flex items-center gap-3 animate-fade-up-sm"
             style={{ animationDelay: "0.9s" }}
           >
-            {/* Animated ring */}
             <div
               className="relative w-11 h-11 shrink-0 animate-float"
               aria-hidden="true"
@@ -761,7 +909,6 @@ const DevDashboard: React.FC = () => {
                 viewBox="0 0 44 44"
                 style={{ transform: "rotate(-90deg)" }}
               >
-                {/* Track */}
                 <circle
                   cx="22"
                   cy="22"
@@ -770,7 +917,6 @@ const DevDashboard: React.FC = () => {
                   stroke="rgba(255,255,255,0.06)"
                   strokeWidth="3"
                 />
-                {/* Fill arc — transitions stroke-dashoffset on seen */}
                 <circle
                   cx="22"
                   cy="22"
@@ -788,7 +934,6 @@ const DevDashboard: React.FC = () => {
                   }}
                 />
               </svg>
-              {/* Count-up number in centre */}
               <div
                 className="absolute inset-0 grid place-content-center font-black text-[#a78bfa]"
                 style={{ fontFamily: "'Syne', sans-serif", fontSize: 11 }}
@@ -797,8 +942,6 @@ const DevDashboard: React.FC = () => {
                 {quality}%
               </div>
             </div>
-
-            {/* Text */}
             <div>
               <p
                 className="font-bold text-white/80 mb-0.5"
@@ -827,3 +970,35 @@ const DevDashboard: React.FC = () => {
 };
 
 export default DevDashboard;
+
+// ─── Setup guide ─────────────────────────────────────────────────────────────
+//
+// ① Change DEFAULT_USERNAME at the top of this file to your GitHub username
+//    OR pass it as a prop: <DevDashboard username="yourname" />
+//
+// ② (Recommended) Add a GitHub Personal Access Token for higher rate limits:
+//
+//    Create one at: https://github.com/settings/tokens
+//    Required scopes: none (public events are unauthenticated)
+//    Select: "public_repo" if you want private repo events too
+//
+//    Then in your .env file:
+//      NEXT_PUBLIC_GITHUB_TOKEN=ghp_xxxxxxxxxxxx   ← Next.js
+//      VITE_GITHUB_TOKEN=ghp_xxxxxxxxxxxx           ← Vite
+//
+//    Then pass it in:
+//      <DevDashboard
+//        username="yourname"
+//        token={process.env.NEXT_PUBLIC_GITHUB_TOKEN}
+//      />
+//
+// ③ Rate limits:
+//    Unauthenticated: 60 requests/hour (plenty for 1-minute polling)
+//    With token:      5000 requests/hour
+//
+// ④ What the GitHub Events API returns:
+//    - PushEvents from the last 90 days
+//    - Up to 300 events per page
+//    - Includes: commit SHA, message, branch (ref), repo name, timestamp
+//    - Does NOT include: private repos (unless using a token with private_repo scope)
+//    - Docs: https://docs.github.com/en/rest/activity/events

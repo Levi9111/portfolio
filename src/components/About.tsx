@@ -117,7 +117,7 @@ const SKILLS: readonly Skill[] = [
 
 const ACHIEVEMENTS: readonly Achievement[] = [
   { number: "5+", label: "Years Experience", icon: Trophy, accent: "#a78bfa" },
-  { number: "60+", label: "Projects Shipped", icon: Target, accent: "#60a5fa" },
+  { number: "30+", label: "Projects Shipped", icon: Target, accent: "#60a5fa" },
   {
     number: "99%",
     label: "Client Satisfaction",
@@ -708,7 +708,10 @@ const About: React.FC = () => {
 
             {/* Activity Widget */}
             {/* <ActivityWidget /> */}
-            <DevDashboard />
+            <DevDashboard
+              username="levi9111"
+              token={import.meta.env.VITE_GITHUB_TOKEN}
+            />
           </div>
         </div>
       </section>
