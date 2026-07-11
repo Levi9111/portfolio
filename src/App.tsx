@@ -7,6 +7,7 @@ import Footer from "./components/Footer";
 import SpaceBackground from "./components/shared/SpaceBackground";
 import Services from "./components/Services";
 import TechPhilosophy from "./components/TechPhilosophy";
+import HireOnUpwork from "./components/HireOnUpwork";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Services />
           <TechPhilosophy />
           <Projects />
+          <HireOnUpwork />
           <Contact />
         </main>
         <Footer />
