@@ -160,11 +160,27 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
       return;
     }
     setStatus("loading");
-    // Simulate contact form submission
-    setTimeout(() => {
+
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+      const response = await fetch(`${baseUrl}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
       setStatus("success");
       setFormData({ name: "", email: "", subject: "", message: "" });
-    }, 1500);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setStatus("error");
+    }
   };
 
   return (

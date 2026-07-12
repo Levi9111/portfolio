@@ -9,12 +9,9 @@ import {
   Target,
   Sparkles,
   ArrowRight,
-  GitBranch,
-  Globe,
-  Star,
 } from "lucide-react";
-// import ActivityWidget from "./shared/ActivityWidget";
-import DevDashboard from "./shared/DevDashboard";
+import ActivityWidget from "./shared/ActivityWidget";
+// import DevDashboard from "./shared/DevDashboard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -404,18 +401,55 @@ const About: React.FC = () => {
           color: rgba(200,200,240,0.5);
         }
 
-        .about-body-grid { grid-template-columns: 1fr 1fr 300px; }
-        @media (max-width: 1100px) {
-          .about-body-grid { grid-template-columns: 1fr 1fr !important; }
-          .about-body-grid > *:last-child { grid-column: 1 / -1; max-width: 360px; margin: 0 auto; }
-        }
-        @media (max-width: 680px) {
-          .about-body-grid { grid-template-columns: 1fr !important; }
-          .about-body-grid > *:last-child { grid-column: auto; max-width: 100%; }
-        }
-        @media (max-width: 768px) {
-          #about-section { padding: 100px 0 80px; }
-        }
+       
+
+.about-body-grid { 
+  grid-template-columns: 1fr 1fr 300px; 
+}
+
+@media (max-width: 1200px) {
+  .about-body-grid { 
+    grid-template-columns: 1fr 1fr !important; 
+  }
+  .about-body-grid > *:last-child { 
+    grid-column: 1 / -1; 
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .about-body-grid { 
+    grid-template-columns: 1fr !important;
+    gap: 32px;
+  }
+  .about-body-grid > *:nth-child(1) { order: 1; }
+  .about-body-grid > *:nth-child(2) { order: 2; }
+  .about-body-grid > *:nth-child(3) { order: 3; max-width: 100%; }
+}
+
+@media (max-width: 768px) {
+  #about-section { 
+    padding: 100px 0 80px; 
+  }
+  .about-body-grid {
+    gap: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  #about-section { 
+    padding: 80px 0 60px; 
+  }
+  .about-title {
+    font-size: clamp(36px, 8vw, 48px);
+  }
+  .about-body-grid {
+    gap: 24px;
+  }
+  .skill-group {
+    padding: 16px 18px;
+  }
+}
       `}</style>
 
       <section id="about-section" ref={sectionRef}>
@@ -707,11 +741,11 @@ const About: React.FC = () => {
             </motion.div>
 
             {/* Activity Widget */}
-            {/* <ActivityWidget /> */}
-            <DevDashboard
+            <ActivityWidget />
+            {/* <DevDashboard
               username="levi9111"
               token={import.meta.env.VITE_GITHUB_TOKEN}
-            />
+            /> */}
           </div>
         </div>
       </section>
