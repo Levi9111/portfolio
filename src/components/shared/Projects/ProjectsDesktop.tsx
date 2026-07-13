@@ -20,7 +20,7 @@ const fadeUp: Variants = {
 };
 
 // Carousel slide directions
-const slideVariants = {
+const slideVariants: Variants = {
   enter: (direction: number) => ({
     x: direction > 0 ? "60%" : "-60%",
     opacity: 0,
