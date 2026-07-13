@@ -11,6 +11,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import ActivityWidget from "./shared/ActivityWidget";
+import MobileActivityWidget from "./shared/MobileActivityWidget";
 // import DevDashboard from "./shared/DevDashboard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -279,6 +280,152 @@ const StatCard: React.FC<StatCardProps> = ({
 
 // ─── About ────────────────────────────────────────────────────────────────────
 
+// ─── About ────────────────────────────────────────────────────────────────────
+
+const AboutMobile: React.FC<{ isInView: boolean }> = ({ isInView }) => {
+  return (
+    <section id="about-section-mobile" className="about-mobile">
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 640, margin: "0 auto", padding: "0 20px" }}>
+        {/* Header */}
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          style={{ textAlign: "center", marginBottom: 40 }}
+        >
+          <motion.div variants={fadeUp}>
+            <div className="about-eyebrow" style={{ fontSize: 9, padding: "5px 12px", marginBottom: 12 }}>
+              Get to know me
+            </div>
+          </motion.div>
+          <motion.h2 className="about-title" style={{ fontSize: 38, letterSpacing: "-1.5px" }} variants={fadeUp}>
+            About <span className="about-title-accent">Me</span>
+          </motion.h2>
+          <motion.div variants={fadeUp}>
+            <div className="about-divider" style={{ marginTop: 16 }} />
+          </motion.div>
+        </motion.div>
+
+        {/* Bio summary */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7 }}
+          style={{
+            fontSize: 14,
+            fontWeight: 300,
+            lineHeight: 1.8,
+            color: "rgba(190,190,220,0.6)",
+            textAlign: "center",
+            marginBottom: 32,
+            padding: "0 10px",
+          }}
+        >
+          I am a <strong style={{ color: "#a78bfa", fontWeight: 500 }}>Full-Stack Developer</strong> with 5+ years of experience shipping production web applications. I build performance-first, type-safe codebases from front-end to deployment.
+        </motion.div>
+
+        {/* MobileActivityWidget */}
+        <div style={{ marginBottom: 36 }}>
+          <MobileActivityWidget />
+        </div>
+
+        {/* Skill section */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 36 }}>
+          <h3
+            style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontSize: 24,
+              color: "#fff",
+              textAlign: "center",
+              marginBottom: 4,
+            }}
+          >
+            My Tech <span style={{ fontStyle: "italic", color: "#34d399" }}>Stack</span>
+          </h3>
+          {SKILLS.map((group) => {
+            const Icon = group.icon;
+            return (
+              <div
+                key={group.category}
+                style={{
+                  padding: "16px",
+                  borderRadius: 14,
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "rgba(5,3,15,0.4)",
+                  backdropFilter: "blur(12px)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: `${group.accent}14`,
+                      border: `1px solid ${group.accent}28`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Icon size={16} color={group.accent} />
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: "1.5px",
+                      textTransform: "uppercase",
+                      color: "rgba(200,200,240,0.6)",
+                    }}
+                  >
+                    {group.category}
+                  </span>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {group.items.map((skill) => (
+                    <span
+                      key={skill}
+                      style={{
+                        padding: "5px 10px",
+                        borderRadius: 8,
+                        fontSize: 11.5,
+                        border: `1px solid ${group.accent}20`,
+                        background: "rgba(255,255,255,0.03)",
+                        color: "rgba(200,200,230,0.55)",
+                      }}
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* CTA */}
+        <div style={{ textAlign: "center" }}>
+          <button
+            className="about-cta"
+            onClick={() =>
+              document
+                .getElementById("contact-section")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+            style={{ width: "100%", justifyContent: "center" }}
+          >
+            <span className="sheen" />
+            <Rocket size={16} />
+            Let's Work Together
+            <ArrowRight size={15} style={{ opacity: 0.6 }} />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const About: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-10%" });
@@ -401,59 +548,54 @@ const About: React.FC = () => {
           color: rgba(200,200,240,0.5);
         }
 
-       
+        .about-desktop {
+          display: block;
+        }
+        .about-mobile {
+          display: none;
+        }
 
-.about-body-grid { 
-  grid-template-columns: 1fr 1fr 300px; 
-}
+        .about-body-grid { 
+          grid-template-columns: 1fr 1fr 300px; 
+        }
 
-@media (max-width: 1200px) {
-  .about-body-grid { 
-    grid-template-columns: 1fr 1fr !important; 
-  }
-  .about-body-grid > *:last-child { 
-    grid-column: 1 / -1; 
-    max-width: 100%;
-  }
-}
+        @media (max-width: 1200px) {
+          .about-body-grid { 
+            grid-template-columns: 1fr 1fr !important; 
+          }
+          .about-body-grid > *:last-child { 
+            grid-column: 1 / -1; 
+            max-width: 100%;
+          }
+        }
 
-@media (max-width: 900px) {
-  .about-body-grid { 
-    grid-template-columns: 1fr !important;
-    gap: 32px;
-  }
-  .about-body-grid > *:nth-child(1) { order: 1; }
-  .about-body-grid > *:nth-child(2) { order: 2; }
-  .about-body-grid > *:nth-child(3) { order: 3; max-width: 100%; }
-}
+        @media (max-width: 900px) {
+          .about-body-grid { 
+            grid-template-columns: 1fr !important;
+            gap: 32px;
+          }
+          .about-body-grid > *:nth-child(1) { order: 1; }
+          .about-body-grid > *:nth-child(2) { order: 2; }
+          .about-body-grid > *:nth-child(3) { order: 3; max-width: 100%; }
+        }
 
-@media (max-width: 768px) {
-  #about-section { 
-    padding: 100px 0 80px; 
-  }
-  .about-body-grid {
-    gap: 28px;
-  }
-}
-
-@media (max-width: 640px) {
-  #about-section { 
-    padding: 80px 0 60px; 
-  }
-  .about-title {
-    font-size: clamp(36px, 8vw, 48px);
-  }
-  .about-body-grid {
-    gap: 24px;
-  }
-  .skill-group {
-    padding: 16px 18px;
-  }
-}
+        @media (max-width: 768px) {
+          .about-desktop {
+            display: none !important;
+          }
+          .about-mobile {
+            display: block !important;
+          }
+          #about-section { 
+            padding: 80px 0 60px; 
+          }
+        }
       `}</style>
 
       <section id="about-section" ref={sectionRef}>
+        {/* Desktop About Section */}
         <div
+          className="about-desktop"
           style={{
             position: "relative",
             zIndex: 1,
@@ -742,12 +884,11 @@ const About: React.FC = () => {
 
             {/* Activity Widget */}
             <ActivityWidget />
-            {/* <DevDashboard
-              username="levi9111"
-              token={import.meta.env.VITE_GITHUB_TOKEN}
-            /> */}
           </div>
         </div>
+
+        {/* Mobile About Section */}
+        <AboutMobile isInView={isInView} />
       </section>
     </>
   );
