@@ -5,139 +5,7 @@ import { motion } from "framer-motion";
 import { stagger, fadeUp, fadeRight } from "./contactTypes";
 import type { FormData, FormStatus } from "./contactTypes";
 
-// ─── AI Assist Dropdown Component ─────────────────────────────────────────────
 
-interface AIAssistProps {
-  onSelectMode: (mode: 'Enhance' | 'Shorten' | 'Lengthen' | 'Casual' | 'Formal') => void;
-  disabled?: boolean;
-}
-
-const AIAssist: React.FC<AIAssistProps> = ({ onSelectMode, disabled }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const options = ["Enhance", "Shorten", "Lengthen", "Casual", "Formal"] as const;
-
-  return (
-    <div style={{ position: "relative", display: "inline-block" }}>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 5,
-          padding: "4px 9px",
-          borderRadius: 8,
-          background: disabled 
-            ? "rgba(255, 255, 255, 0.03)" 
-            : "rgba(139, 92, 246, 0.12)",
-          border: `1px solid ${disabled ? "rgba(255, 255, 255, 0.08)" : "rgba(139, 92, 246, 0.35)"}`,
-          color: disabled ? "rgba(255, 255, 255, 0.3)" : "#c084fc",
-          fontSize: 10.5,
-          fontWeight: 500,
-          cursor: disabled ? "not-allowed" : "pointer",
-          transition: "all 0.2s",
-          fontFamily: "'Outfit', sans-serif",
-          outline: "none",
-        }}
-        onMouseEnter={(e) => {
-          if (!disabled) {
-            e.currentTarget.style.background = "rgba(139, 92, 246, 0.22)";
-            e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.55)";
-            e.currentTarget.style.boxShadow = "0 0 8px rgba(139, 92, 246, 0.25)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!disabled) {
-            e.currentTarget.style.background = "rgba(139, 92, 246, 0.12)";
-            e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.35)";
-            e.currentTarget.style.boxShadow = "none";
-          }
-        }}
-      >
-        <Sparkles size={11.5} className={disabled ? "" : "animate-pulse"} />
-        <span>AI Assist</span>
-        <ChevronDown 
-          size={10.5} 
-          style={{ 
-            transform: isOpen ? "rotate(180deg)" : "none", 
-            transition: "transform 0.2s ease" 
-          }} 
-        />
-      </button>
-
-      {isOpen && (
-        <>
-          <div
-            onClick={() => setIsOpen(false)}
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 999,
-              cursor: "default",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: "calc(100% + 6px)",
-              right: 0,
-              zIndex: 1000,
-              background: "rgba(10, 6, 22, 0.96)",
-              border: "1px solid rgba(139, 92, 246, 0.25)",
-              borderRadius: 10,
-              boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.7), 0 0 15px rgba(139, 92, 246, 0.1)",
-              padding: "5px",
-              minWidth: 120,
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              transformOrigin: "top right",
-              animation: "fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
-          >
-            {options.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => {
-                  onSelectMode(option);
-                  setIsOpen(false);
-                }}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "7px 12px",
-                  background: "transparent",
-                  border: "none",
-                  borderRadius: 6,
-                  color: "rgba(220, 220, 255, 0.85)",
-                  fontSize: 11.5,
-                  fontWeight: 400,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                  fontFamily: "'Outfit', sans-serif",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(139, 92, 246, 0.18)";
-                  e.currentTarget.style.color = "#ffffff";
-                  e.currentTarget.style.paddingLeft = "14px";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "rgba(220, 220, 255, 0.85)";
-                  e.currentTarget.style.paddingLeft = "12px";
-                }}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
 
 // ─── Field ────────────────────────────────────────────────────────────────────
 
@@ -301,54 +169,56 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
 
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiStatus, setAiStatus] = useState("");
+  const [showModes, setShowModes] = useState(false);
+  const [aiWarning, setAiWarning] = useState("");
+  const [aiError, setAiError] = useState("");
 
-  const handleAiAssist = (mode: 'Enhance' | 'Shorten' | 'Lengthen' | 'Casual' | 'Formal') => {
+  const handleModeClick = async (mode: 'Enhance' | 'Shorten' | 'Lengthen' | 'Casual' | 'Formal') => {
+    setShowModes(false);
+    setAiWarning("");
+    setAiError("");
+
+    const currentMsg = formData.message.trim();
+
+    // Validation: if the textarea is empty or has fewer than 5 characters, prevent AI call
+    if (!currentMsg || currentMsg.length < 5) {
+      setAiWarning("Please write at least 5 characters first so the AI can assist you!");
+      return;
+    }
+
     setIsAiLoading(true);
-    setAiStatus("✨ AI is analyzing context...");
+    setAiStatus("✨ AI is rewriting...");
 
-    setTimeout(() => {
-      setAiStatus(`✨ Refactoring message to ${mode}...`);
-      
-      setTimeout(() => {
-        setAiStatus("✨ Polishing style...");
-        
-        setTimeout(() => {
-          setFormData(prev => {
-            const currentMsg = prev.message.trim();
-            let newMsg = "";
-            
-            if (!currentMsg) {
-              if (mode === "Enhance") {
-                newMsg = "Hi Shanjid,\n\nI was highly impressed by your portfolio and the caliber of projects you have delivered. I am reaching out to discuss a potential collaboration opportunity on an upcoming web development project. Let's schedule a time to talk.\n\nBest regards,";
-              } else if (mode === "Shorten") {
-                newMsg = "Hi Shanjid, let's collaborate on a web application project. Let me know when you're free to talk.";
-              } else if (mode === "Lengthen") {
-                newMsg = "Dear Shanjid,\n\nI hope this message finds you well. I recently explored your professional portfolio and was thoroughly impressed by your technical expertise, particularly in full-stack architecture and CLI systems. I am reaching out to inquire about your availability to collaborate on an exciting new software project. I believe your skills would align perfectly with our goals. Looking forward to discussing details soon.\n\nWarm regards,";
-              } else if (mode === "Casual") {
-                newMsg = "Hey Shanjid! Checked out your portfolio and loved your work. I have an interesting project idea and would love to team up. Let me know if you'd be down to chat sometime soon!";
-              } else if (mode === "Formal") {
-                newMsg = "Dear Shanjid Ahmad,\n\nI am writing to express interest in your technical services. Having reviewed your portfolio and modular Express architecture projects, I believe your expertise is well-suited for our business requirements. Please let know your availability for a brief consultation call.\n\nSincerely,";
-              }
-            } else {
-              if (mode === "Enhance") {
-                newMsg = `Hi Shanjid,\n\nRegarding: "${currentMsg}"\n\nI wanted to expand on this and reach out to collaborate. Your technical work is outstanding, and I believe combining our efforts would yield exceptional results. Let's discuss this project further at your earliest convenience.`;
-              } else if (mode === "Shorten") {
-                newMsg = `Hi Shanjid, regarding your work: ${currentMsg.slice(0, 60)}... Let's collaborate!`;
-              } else if (mode === "Lengthen") {
-                newMsg = `Dear Shanjid,\n\nI am contacting you regarding: "${currentMsg}". I hope we can collaborate. I have been seeking a developer with your exact skillset in modular development and modern styling. I would love to schedule a meeting to detail the architecture and timelines.`;
-              } else if (mode === "Casual") {
-                newMsg = `Hey Shanjid! Real quick about: "${currentMsg}". Super excited to collaborate on this. Let's connect soon and work out the details!`;
-              } else if (mode === "Formal") {
-                newMsg = `Dear Mr. Ahmad,\n\nI am writing in reference to: "${currentMsg}". I would like to formally request a consultation to explore options for collaboration on this project. Thank you.`;
-              }
-            }
-            return { ...prev, message: newMsg };
-          });
-          setIsAiLoading(false);
-          setAiStatus("");
-        }, 850);
-      }, 850);
-    }, 850);
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+      const response = await fetch(`${baseUrl}/ai-assist`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userMessage: currentMsg,
+          mode: mode.toLowerCase(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Could not enhance message right now.");
+      }
+
+      const data = await response.json();
+      if (data.success && data.improvedText) {
+        setFormData(prev => ({ ...prev, message: data.improvedText }));
+      } else {
+        throw new Error("Could not enhance message right now.");
+      }
+    } catch (error) {
+      console.error("AI Assist error:", error);
+      setAiError("Could not enhance message right now. Please try again in a moment.");
+    } finally {
+      setIsAiLoading(false);
+      setAiStatus("");
+    }
   };
 
   const handleChange = (
@@ -571,14 +441,162 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
             onChange={handleChange}
             disabled={loading || isAiLoading}
             isAiLoading={isAiLoading}
-            extraAction={
-              <AIAssist 
-                disabled={loading || isAiLoading} 
-                onSelectMode={handleAiAssist} 
-              />
-            }
             toolparamdescription="The full content of the message or message details"
           />
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: -4 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button
+                  type="button"
+                  disabled={loading || isAiLoading}
+                  onClick={() => setShowModes(!showModes)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "6px 12px",
+                    borderRadius: 8,
+                    background: (loading || isAiLoading)
+                      ? "rgba(255, 255, 255, 0.03)" 
+                      : "rgba(139, 92, 246, 0.12)",
+                    border: `1px solid ${(loading || isAiLoading) ? "rgba(255, 255, 255, 0.08)" : "rgba(139, 92, 246, 0.35)"}`,
+                    color: (loading || isAiLoading) ? "rgba(255, 255, 255, 0.3)" : "#c084fc",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: (loading || isAiLoading) ? "not-allowed" : "pointer",
+                    transition: "all 0.2s",
+                    fontFamily: "'Outfit', sans-serif",
+                    outline: "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!(loading || isAiLoading)) {
+                      e.currentTarget.style.background = "rgba(139, 92, 246, 0.22)";
+                      e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.55)";
+                      e.currentTarget.style.boxShadow = "0 0 8px rgba(139, 92, 246, 0.25)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!(loading || isAiLoading)) {
+                      e.currentTarget.style.background = "rgba(139, 92, 246, 0.12)";
+                      e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.35)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }
+                  }}
+                >
+                  <Sparkles size={13} className={(loading || isAiLoading) ? "" : "animate-pulse"} />
+                  <span>AI Assist</span>
+                  <ChevronDown 
+                    size={11} 
+                    style={{ 
+                      transform: showModes ? "rotate(180deg)" : "none", 
+                      transition: "transform 0.2s ease" 
+                    }} 
+                  />
+                </button>
+
+                {isAiLoading && (
+                  <span style={{ fontSize: 11, color: "#a78bfa", display: "flex", alignItems: "center", gap: 6 }}>
+                    <span className="cc-spinner" style={{ width: 12, height: 12, borderWidth: 1.5 }} />
+                    <span>AI is rewriting...</span>
+                  </span>
+                )}
+              </div>
+              
+              {/* Character count */}
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", fontFamily: "'Outfit', sans-serif" }}>
+                {formData.message.length} characters
+              </span>
+
+              {/* Popup menu */}
+              {showModes && (
+                <>
+                  <div
+                    onClick={() => setShowModes(false)}
+                    style={{
+                      position: "fixed",
+                      inset: 0,
+                      zIndex: 999,
+                      cursor: "default",
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "calc(100% + 8px)",
+                      left: 0,
+                      zIndex: 1000,
+                      background: "rgba(10, 6, 22, 0.96)",
+                      border: "1px solid rgba(139, 92, 246, 0.25)",
+                      borderRadius: 10,
+                      boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.7), 0 0 15px rgba(139, 92, 246, 0.1)",
+                      padding: "5px",
+                      minWidth: 120,
+                      backdropFilter: "blur(12px)",
+                      WebkitBackdropFilter: "blur(12px)",
+                      transformOrigin: "bottom left",
+                      animation: "fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
+                    }}
+                  >
+                    {(["Enhance", "Shorten", "Lengthen", "Casual", "Formal"] as const).map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handleModeClick(option)}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "7px 12px",
+                          background: "transparent",
+                          border: "none",
+                          borderRadius: 6,
+                          color: "rgba(220, 220, 255, 0.85)",
+                          fontSize: 12,
+                          fontWeight: 400,
+                          cursor: "pointer",
+                          transition: "all 0.15s",
+                          fontFamily: "'Outfit', sans-serif",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(139, 92, 246, 0.18)";
+                          e.currentTarget.style.color = "#ffffff";
+                          e.currentTarget.style.paddingLeft = "14px";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "rgba(220, 220, 255, 0.85)";
+                          e.currentTarget.style.paddingLeft = "12px";
+                        }}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Warnings & Errors */}
+            {aiWarning && (
+              <motion.span 
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{ fontSize: 11, color: "#fbbf24", fontFamily: "'Outfit', sans-serif", marginTop: 4 }}
+              >
+                ⚠️ {aiWarning}
+              </motion.span>
+            )}
+            {aiError && (
+              <motion.span 
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{ fontSize: 11, color: "#f87171", fontFamily: "'Outfit', sans-serif", marginTop: 4 }}
+              >
+                ❌ {aiError}
+              </motion.span>
+            )}
+          </div>
 
           {status === "success" && (
             <motion.div
