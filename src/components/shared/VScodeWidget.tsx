@@ -245,27 +245,21 @@ const useContainerWidth = (ref: React.RefObject<HTMLDivElement | null>) => {
   return width;
 };
 
-// ─── VSCodeWidget ─────────────────────────────────────────────────────────────
+// ─── VSCodeWidgetDesktop ──────────────────────────────────────────────────────
 
-const VSCodeWidget: React.FC = () => {
+const VSCodeWidgetDesktop: React.FC = () => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerWidth = useContainerWidth(wrapperRef);
 
-  // Hide sidebar below 380px, shrink font below 440px
-  const showSidebar = containerWidth >= 380;
+  const showSidebar = true; // Always show sidebar on desktop
   const compactMode = containerWidth < 440;
-  // Sidebar width scales with container — never wider than 130px
   const sidebarW = Math.min(130, Math.floor(containerWidth * 0.28));
-  // Code font size: 11px on compact, 12px normal
   const codeFontSize = compactMode ? 11 : 12;
-  // Line height in px — keep proportional
   const lineH = compactMode ? 18 : 20;
-  // Editor body height — taller on wider screens (min 200, max 300)
   const editorH = Math.min(
     300,
     Math.max(200, Math.floor(containerWidth * 0.55)),
   );
-  // How many visible lines before we start scrolling
   const visibleLineCount = Math.floor(editorH / lineH);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -349,15 +343,12 @@ const VSCodeWidget: React.FC = () => {
   }, []);
 
   const totalLines = CODE_LINES.length;
-  // Auto-scroll: keep cursor in view, centre it once past halfway point
   const scrollTop =
     Math.max(0, cursorLine - Math.floor(visibleLineCount * 0.6)) * lineH;
 
-  // Line number column width — always enough for 2 digits + padding
   const lineNumW = compactMode ? 24 : 28;
 
   return (
-    // Outer wrapper: full width, measures itself
     <div ref={wrapperRef} style={{ width: "100%" }}>
       <motion.div
         ref={ref}
@@ -365,7 +356,7 @@ const VSCodeWidget: React.FC = () => {
         animate={inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
         style={{
-          width: "100%", // fills the column, not a fixed max-width
+          width: "100%",
           borderRadius: 16,
           overflow: "hidden",
           border: "0.5px solid rgba(139,92,246,0.2)",
@@ -376,7 +367,6 @@ const VSCodeWidget: React.FC = () => {
             "0 24px 80px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(139,92,246,0.15)",
           fontFamily:
             "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
-          // Prevent any child text from forcing the widget wider than its parent
           minWidth: 0,
         }}
         aria-label="Live VS Code session widget"
@@ -393,7 +383,7 @@ const VSCodeWidget: React.FC = () => {
           }
         `}</style>
 
-        {/* ── Title bar ── */}
+        {/* Title bar */}
         <div
           style={{
             background: "rgba(30,22,50,0.9)",
@@ -418,7 +408,6 @@ const VSCodeWidget: React.FC = () => {
               }}
             />
           ))}
-          {/* Title — truncates gracefully */}
           <div
             style={{
               flex: 1,
@@ -441,7 +430,6 @@ const VSCodeWidget: React.FC = () => {
               Hero.tsx — shanjid-portfolio
             </span>
           </div>
-          {/* Live indicator */}
           <div
             style={{
               display: "flex",
@@ -474,7 +462,7 @@ const VSCodeWidget: React.FC = () => {
           </div>
         </div>
 
-        {/* ── File tabs ── */}
+        {/* File tabs */}
         <div
           style={
             {
@@ -484,7 +472,6 @@ const VSCodeWidget: React.FC = () => {
               alignItems: "stretch",
               height: compactMode ? 28 : 34,
               overflowX: "auto",
-              // Hide scrollbar on mobile — tabs are small enough
               scrollbarWidth: "none",
               msOverflowStyle: "none",
             } as React.CSSProperties
@@ -534,9 +521,8 @@ const VSCodeWidget: React.FC = () => {
           ))}
         </div>
 
-        {/* ── Editor body: [sidebar] + code ── */}
+        {/* Editor body: [sidebar] + code */}
         <div style={{ display: "flex", height: editorH, minWidth: 0 }}>
-          {/* File tree sidebar — hidden on narrow containers */}
           {showSidebar && (
             <div
               style={{
@@ -618,7 +604,6 @@ const VSCodeWidget: React.FC = () => {
                 transition: "transform 0.12s ease",
               }}
             >
-              {/* Completed lines */}
               {CODE_LINES.slice(0, visibleLines).map((line, li) => (
                 <div
                   key={li}
@@ -652,8 +637,10 @@ const VSCodeWidget: React.FC = () => {
                     style={{
                       fontSize: codeFontSize,
                       lineHeight: `${lineH}px`,
-                      whiteSpace: "pre", // keeps code spacing intact
-                      overflow: "hidden", // never pushes container wider
+                      whiteSpace: "pre",
+                      overflow: "hidden",
+                      flex: 1,
+                      minWidth: 0,
                     }}
                   >
                     {renderFullLine(line, li)}
@@ -661,7 +648,6 @@ const VSCodeWidget: React.FC = () => {
                 </div>
               ))}
 
-              {/* Currently typing line */}
               {visibleLines < totalLines && (
                 <div
                   style={{
@@ -693,10 +679,11 @@ const VSCodeWidget: React.FC = () => {
                       lineHeight: `${lineH}px`,
                       whiteSpace: "pre",
                       overflow: "hidden",
+                      flex: 1,
+                      minWidth: 0,
                     }}
                   >
                     {renderPartialLine(CODE_LINES[visibleLines], currentChars)}
-                    {/* Blinking block cursor */}
                     <span
                       style={{
                         display: "inline-block",
@@ -717,7 +704,6 @@ const VSCodeWidget: React.FC = () => {
                 </div>
               )}
 
-              {/* Trailing empty lines */}
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={`empty-${i}`}
@@ -747,7 +733,7 @@ const VSCodeWidget: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Status bar ── */}
+        {/* Status bar */}
         <div
           style={{
             background: "rgba(109,40,217,0.75)",
@@ -825,6 +811,328 @@ const VSCodeWidget: React.FC = () => {
         </div>
       </motion.div>
     </div>
+  );
+};
+
+// ─── VSCodeWidgetMobile ───────────────────────────────────────────────────────
+
+const VSCodeWidgetMobile: React.FC = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-5%" });
+
+  const [typedCmd, setTypedCmd] = useState("");
+  const [showOutput, setShowOutput] = useState(false);
+  const [blink, setBlink] = useState(true);
+
+  // Blinking terminal cursor
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBlink((b) => !b);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Neofetch command typing loop
+  useEffect(() => {
+    if (!inView) return;
+    let isMounted = true;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const runCycle = async () => {
+      // 1. Initial State Reset
+      setTypedCmd("");
+      setShowOutput(false);
+      await new Promise((resolve) => {
+        timer = setTimeout(resolve, 800);
+      });
+      if (!isMounted) return;
+
+      // 2. Type "neofetch"
+      const cmd = "neofetch";
+      for (let i = 0; i <= cmd.length; i++) {
+        setTypedCmd(cmd.slice(0, i));
+        await new Promise((resolve) => {
+          timer = setTimeout(resolve, 90 + Math.random() * 50);
+        });
+        if (!isMounted) return;
+      }
+
+      // 3. Command execution trigger
+      await new Promise((resolve) => {
+        timer = setTimeout(resolve, 350);
+      });
+      if (!isMounted) return;
+      setShowOutput(true);
+
+      // 4. Pause before looping
+      await new Promise((resolve) => {
+        timer = setTimeout(resolve, 6500);
+      });
+      if (!isMounted) return;
+
+      runCycle();
+    };
+
+    runCycle();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [inView]);
+
+  return (
+    <div style={{ width: "100%" }}>
+      <motion.div
+        ref={ref}
+        initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+        animate={inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+        style={{
+          width: "100%",
+          borderRadius: 14,
+          overflow: "hidden",
+          border: "0.5px solid rgba(139,92,246,0.18)",
+          background: "rgba(5,3,15,0.7)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.4)",
+          fontFamily:
+            "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+          minWidth: 0,
+        }}
+        aria-label="Mobile terminal session widget"
+      >
+        {/* Terminal Header */}
+        <div
+          style={{
+            background: "rgba(30,22,50,0.9)",
+            borderBottom: "0.5px solid rgba(255,255,255,0.05)",
+            padding: "8px 12px",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            minWidth: 0,
+          }}
+        >
+          {(["#ff5f57", "#ffbd2e", "#28c840"] as const).map((c, i) => (
+            <div
+              key={i}
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: c,
+                opacity: 0.85,
+                flexShrink: 0,
+              }}
+            />
+          ))}
+          <div
+            style={{
+              flex: 1,
+              textAlign: "center",
+              overflow: "hidden",
+              minWidth: 0,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 9.5,
+                color: "rgba(200,200,240,0.45)",
+                letterSpacing: "0.3px",
+                display: "block",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              shanjid@portfolio:~ — bash
+            </span>
+          </div>
+          <div
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: "50%",
+              background: "#34d399",
+              boxShadow: "0 0 4px rgba(52,211,153,0.7)",
+            }}
+          />
+        </div>
+
+        {/* Terminal Body */}
+        <div
+          style={{
+            height: 210,
+            padding: "10px 14px",
+            fontSize: 10,
+            lineHeight: "1.45",
+            color: "rgba(230, 230, 250, 0.85)",
+            textAlign: "left",
+            overflow: "hidden",
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
+          {/* Active Prompt Row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ color: "#34d399" }}>shanjid@portfolio</span>
+            <span style={{ color: "rgba(255,255,255,0.4)" }}>:~$</span>
+            <span>{typedCmd}</span>
+            {!showOutput && (
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 5,
+                  height: 10,
+                  background: blink ? "#a78bfa" : "transparent",
+                  boxShadow: blink ? "0 0 4px rgba(167,139,250,0.6)" : "none",
+                }}
+              />
+            )}
+          </div>
+
+          {/* Neofetch Output Block */}
+          {showOutput && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+                marginTop: 4,
+              }}
+            >
+              <div style={{ fontWeight: "bold", color: "#818cf8" }}>
+                shanjid@portfolio
+              </div>
+              <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 9 }}>
+                -------------------------
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  paddingLeft: 4,
+                }}
+              >
+                <div>
+                  <span style={{ color: "#a78bfa" }}>OS:</span>
+                  <span style={{ color: "rgba(255,255,255,0.75)" }}>
+                    {" "}
+                    Fedora Workstation 42
+                  </span>
+                </div>
+                <div>
+                  <span style={{ color: "#a78bfa" }}>Host:</span>
+                  <span style={{ color: "rgba(255,255,255,0.75)" }}>
+                    {" "}
+                    Portfolio Web Engine
+                  </span>
+                </div>
+                <div>
+                  <span style={{ color: "#a78bfa" }}>Kernel:</span>
+                  <span style={{ color: "rgba(255,255,255,0.75)" }}>
+                    {" "}
+                    MERN-Stack-NextJS
+                  </span>
+                </div>
+                <div>
+                  <span style={{ color: "#a78bfa" }}>Uptime:</span>
+                  <span style={{ color: "rgba(255,255,255,0.75)" }}>
+                    {" "}
+                    5+ Years of dev
+                  </span>
+                </div>
+                <div>
+                  <span style={{ color: "#a78bfa" }}>Shell:</span>
+                  <span style={{ color: "rgba(255,255,255,0.75)" }}>
+                    {" "}
+                    bash 5.2
+                  </span>
+                </div>
+                <div>
+                  <span style={{ color: "#a78bfa" }}>CPU:</span>
+                  <span style={{ color: "rgba(255,255,255,0.75)" }}>
+                    {" "}
+                    TypeScript & Node.js
+                  </span>
+                </div>
+                <div>
+                  <span style={{ color: "#34d399", fontWeight: "bold" }}>
+                    Status:
+                  </span>
+                  <span style={{ color: "#34d399", fontWeight: "bold" }}>
+                    {" "}
+                    Available for Hire 🚀
+                  </span>
+                </div>
+              </div>
+
+              {/* Next active prompt */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  marginTop: 6,
+                }}
+              >
+                <span style={{ color: "#34d399" }}>shanjid@portfolio</span>
+                <span style={{ color: "rgba(255,255,255,0.4)" }}>:~$</span>
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 5,
+                    height: 10,
+                    background: blink ? "#a78bfa" : "transparent",
+                    boxShadow: blink ? "0 0 4px rgba(167,139,250,0.6)" : "none",
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ─── VSCodeWidget Parent Wrapper ──────────────────────────────────────────────
+
+const VSCodeWidget: React.FC = () => {
+  return (
+    <>
+      <div className="vsc-desktop" style={{ width: "100%" }}>
+        <VSCodeWidgetDesktop />
+      </div>
+      <div className="vsc-mobile" style={{ width: "100%" }}>
+        <VSCodeWidgetMobile />
+      </div>
+      <style>{`
+        .vsc-desktop {
+          display: block;
+        }
+        .vsc-mobile {
+          display: none;
+        }
+        @media (max-width: 768px) {
+          .vsc-desktop {
+            display: none !important;
+          }
+          .vsc-mobile {
+            display: block !important;
+          }
+        }
+      `}</style>
+    </>
   );
 };
 
