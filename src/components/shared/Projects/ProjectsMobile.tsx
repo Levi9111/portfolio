@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { ExternalLink, Github, ArrowUpRight } from "lucide-react";
-import { motion, useInView, Variants } from "framer-motion";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { ExternalLink, Github, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, useInView, AnimatePresence, Variants } from "framer-motion";
 import { PROJECTS } from "../../../data/projects";
 import LinkPill from "./LinkPill";
 import InstallSnippet from "./InstallSnippet";
@@ -14,38 +14,53 @@ const fadeUp: Variants = {
   show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] } },
 };
 
-const cardVariant: Variants = {
-  hidden: { opacity: 0, y: 40, filter: "blur(6px)" },
-  show: (i: number) => ({
-    opacity: 1, y: 0, filter: "blur(0px)",
-    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: i * 0.1 },
-  }),
-};
-
 const stagger: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
 };
 
+// Carousel slide directions
+const slideVariants: Variants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? "60%" : "-60%",
+    opacity: 0,
+    filter: "blur(8px)",
+    scale: 0.95,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    filter: "blur(0px)",
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+  },
+  exit: (direction: number) => ({
+    x: direction < 0 ? "60%" : "-60%",
+    opacity: 0,
+    filter: "blur(8px)",
+    scale: 0.95,
+    transition: { duration: 0.35, ease: [0.7, 0, 1, 0.3] },
+  }),
+};
+
 // ─── Mobile Card ──────────────────────────────────────────────────────────────
 
-const MobileCard: React.FC<{ project: (typeof PROJECTS)[number]; index: number }> = ({ project, index }) => {
-  const [expanded, setExpanded] = useState(false);
+const MobileCard: React.FC<{ project: (typeof PROJECTS)[number] }> = ({ project }) => {
   const [hovered, setHovered] = useState(false);
   const Icon = project.icon;
 
   return (
     <motion.article
-      variants={cardVariant}
-      custom={index}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       style={{
         position: "relative", borderRadius: 18, overflow: "hidden",
-        border: `1px solid ${hovered || expanded ? project.accent + "40" : "rgba(255,255,255,0.08)"}`,
+        border: `1px solid ${hovered ? project.accent + "40" : "rgba(255,255,255,0.08)"}`,
         background: "rgba(5,3,15,0.6)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
         transition: "border-color 0.3s, box-shadow 0.3s",
-        boxShadow: hovered || expanded ? `0 16px 48px ${project.glow}` : "none",
+        boxShadow: hovered ? `0 16px 48px ${project.glow}` : "none",
+        display: "flex", flexDirection: "column",
+        width: "100%",
       }}
       aria-label={`${project.title} project`}
     >
@@ -53,20 +68,13 @@ const MobileCard: React.FC<{ project: (typeof PROJECTS)[number]; index: number }
         style={{
           position: "absolute", top: 0, left: "5%", right: "5%", height: 1, zIndex: 10,
           background: `linear-gradient(90deg, transparent, ${project.accent}cc, transparent)`,
-          opacity: hovered || expanded ? 1 : 0, transition: "opacity 0.35s",
+          opacity: hovered ? 1 : 0, transition: "opacity 0.35s",
         }}
         aria-hidden="true"
       />
 
       {/* ── Header row ── */}
-      <div
-        style={{ display: "flex", alignItems: "stretch", cursor: "pointer", minHeight: 80 }}
-        onClick={() => setExpanded((e) => !e)}
-        role="button"
-        aria-expanded={expanded}
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setExpanded((ex) => !ex); }}
-      >
+      <div style={{ display: "flex", alignItems: "stretch", minHeight: 80 }}>
         <div
           style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${project.accent}, ${project.accent}55)` }}
           aria-hidden="true"
@@ -87,7 +95,7 @@ const MobileCard: React.FC<{ project: (typeof PROJECTS)[number]; index: number }
               <h3
                 style={{
                   fontFamily: "'Instrument Serif', serif", fontSize: 18, fontWeight: 400,
-                  color: hovered || expanded ? project.accent : "#fff", letterSpacing: "-0.2px",
+                  color: hovered ? project.accent : "#fff", letterSpacing: "-0.2px",
                   margin: 0, transition: "color 0.25s", whiteSpace: "nowrap",
                 }}
               >
@@ -116,89 +124,70 @@ const MobileCard: React.FC<{ project: (typeof PROJECTS)[number]; index: number }
             </p>
           </div>
         </div>
-
-        <div style={{ display: "flex", alignItems: "center", paddingRight: 16, flexShrink: 0 }}>
-          <div
-            style={{
-              width: 24, height: 24, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              transition: "transform 0.3s, border-color 0.3s, background 0.3s",
-              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-              background: expanded ? `${project.accent}15` : "transparent",
-              borderColor: expanded ? `${project.accent}40` : "rgba(255,255,255,0.1)",
-            }}
-          >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-              <path d="M2 3.5L5 6.5L8 3.5" stroke={expanded ? project.accent : "rgba(255,255,255,0.4)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-        </div>
       </div>
 
-      {/* ── Expanded content ── */}
-      <div style={{ overflow: "hidden", maxHeight: expanded ? "700px" : "0", transition: "max-height 0.45s cubic-bezier(0.34,1.1,0.64,1)" }}>
-        <div style={{ borderTop: `0.5px solid ${project.accent}20`, padding: "20px 22px 22px" }}>
-          <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.8, color: "rgba(190,190,220,0.55)", marginBottom: 16 }}>
-            {project.description}
-          </p>
+      {/* ── Content area ── */}
+      <div style={{ borderTop: `0.5px solid ${project.accent}20`, padding: "20px 22px 22px" }}>
+        <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.8, color: "rgba(190,190,220,0.55)", marginBottom: 16 }}>
+          {project.description}
+        </p>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
-            {project.technologies.map((tech) => (
-              <span
-                key={tech}
-                style={{
-                  display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: 8,
-                  fontSize: 11, fontWeight: 400, border: `1px solid ${project.accent}28`,
-                  background: project.glow, color: project.accent,
-                }}
-              >
-                {tech}
-              </span>
-            ))}
-          </div>
-
-          {/* Repo links — all of them */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: project.npmPackage ? 12 : 16 }}>
-            {project.links.map((link) => (
-              <LinkPill key={link.href} link={link} accent={project.accent} glow={project.glow} />
-            ))}
-          </div>
-
-          {project.npmPackage && (
-            <div style={{ marginBottom: 16 }}>
-              <InstallSnippet packageName={project.npmPackage} accent={project.accent} />
-            </div>
-          )}
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-            {project.liveUrl && (
-              <a
-                href={project.liveUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 20px", borderRadius: 11,
-                  border: `1px solid ${project.accent}55`, background: `${project.accent}18`, color: project.accent,
-                  fontSize: 13, fontWeight: 500, textDecoration: "none", flex: 1, justifyContent: "center",
-                }}
-              >
-                <ExternalLink size={15} /> Visit Site
-              </a>
-            )}
-            <a
-              href="https://github.com/levi9111"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub"
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+          {project.technologies.map((tech) => (
+            <span
+              key={tech}
               style={{
-                display: "inline-flex", alignItems: "center", justifyContent: "center", width: 42, height: 42,
-                borderRadius: 11, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)",
-                color: "rgba(200,200,240,0.5)", textDecoration: "none", flexShrink: 0,
+                display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: 8,
+                fontSize: 11, fontWeight: 400, border: `1px solid ${project.accent}28`,
+                background: project.glow, color: project.accent,
               }}
             >
-              <Github size={16} />
-            </a>
+              {tech}
+            </span>
+          ))}
+        </div>
+
+        {/* Repo links */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: project.npmPackage ? 12 : 16 }}>
+          {project.links.map((link) => (
+            <LinkPill key={link.href} link={link} accent={project.accent} glow={project.glow} />
+          ))}
+        </div>
+
+        {project.npmPackage && (
+          <div style={{ marginBottom: 16 }}>
+            <InstallSnippet packageName={project.npmPackage} accent={project.accent} />
           </div>
+        )}
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          {project.liveUrl && (
+            <a
+              href={project.liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 20px", borderRadius: 11,
+                border: `1px solid ${project.accent}55`, background: `${project.accent}18`, color: project.accent,
+                fontSize: 13, fontWeight: 500, textDecoration: "none", flex: 1, justifyContent: "center",
+              }}
+            >
+              <ExternalLink size={15} /> Visit Site
+            </a>
+          )}
+          <a
+            href="https://github.com/levi9111"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub"
+            style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center", width: 42, height: 42,
+              borderRadius: 11, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)",
+              color: "rgba(200,200,240,0.5)", textDecoration: "none", flexShrink: 0,
+            }}
+          >
+            <Github size={16} />
+          </a>
         </div>
       </div>
 
@@ -206,7 +195,7 @@ const MobileCard: React.FC<{ project: (typeof PROJECTS)[number]; index: number }
         style={{
           position: "absolute", inset: 0, borderRadius: 18, pointerEvents: "none",
           background: `radial-gradient(circle at 0% 50%, ${project.accent}06, transparent 55%)`,
-          opacity: hovered || expanded ? 1 : 0, transition: "opacity 0.4s",
+          opacity: hovered ? 1 : 0, transition: "opacity 0.4s",
         }}
         aria-hidden="true"
       />
@@ -219,7 +208,7 @@ const MobileCard: React.FC<{ project: (typeof PROJECTS)[number]; index: number }
 const StatsStrip: React.FC = () => (
   <div
     style={{
-      display: "flex", gap: 0, marginBottom: 48, borderRadius: 16, overflow: "hidden",
+      display: "flex", gap: 0, marginBottom: 36, borderRadius: 16, overflow: "hidden",
       border: "1px solid rgba(255,255,255,0.07)", background: "rgba(5,3,15,0.4)", backdropFilter: "blur(12px)",
     }}
   >
@@ -240,6 +229,185 @@ const StatsStrip: React.FC = () => (
   </div>
 );
 
+// ─── Mobile Projects Carousel ─────────────────────────────────────────────────
+
+const MobileProjectsCarousel: React.FC<{ isInView: boolean }> = ({ isInView }) => {
+  const [[activeIndex, direction], setPage] = useState([0, 0]);
+  const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const paginate = useCallback((newDirection: number) => {
+    setPage(([current]) => {
+      const next = (current + newDirection + PROJECTS.length) % PROJECTS.length;
+      return [next, newDirection];
+    });
+  }, []);
+
+  const goTo = useCallback((index: number) => {
+    setPage(([current]) => [index, index > current ? 1 : -1]);
+  }, []);
+
+  useEffect(() => {
+    if (!isInView || isPaused) return;
+
+    const intervalTime = 50; // update every 50ms
+    const step = (intervalTime / 5000) * 100; // 5000ms total duration
+
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          paginate(1);
+          return 0;
+        }
+        return prev + step;
+      });
+    }, intervalTime);
+
+    return () => clearInterval(timer);
+  }, [isInView, isPaused, paginate]);
+
+  useEffect(() => {
+    setProgress(0);
+  }, [activeIndex]);
+
+  const project = PROJECTS[activeIndex];
+
+  return (
+    <div
+      onTouchStart={() => setIsPaused(true)}
+      onTouchEnd={() => setIsPaused(false)}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}
+    >
+      {/* Card stage */}
+      <div style={{ position: "relative", minHeight: 460, overflow: "hidden" }}>
+        <AnimatePresence mode="popLayout" custom={direction} initial={false}>
+          <motion.div
+            key={activeIndex}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            style={{ position: "absolute", inset: 0, width: "100%", willChange: "transform, opacity" }}
+          >
+            <MobileCard project={project} />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Progress bar loader */}
+      <div
+        style={{
+          width: "100%",
+          height: 3,
+          background: "rgba(255, 255, 255, 0.05)",
+          borderRadius: 2,
+          overflow: "hidden",
+          position: "relative",
+          marginTop: 4,
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${progress}%`,
+            background: `linear-gradient(90deg, transparent, ${project.accent}, ${project.accent}, transparent)`,
+            boxShadow: `0 0 10px ${project.accent}`,
+            transition: "width 0.05s linear",
+          }}
+        />
+      </div>
+
+      {/* Controls row: prev · dots · next */}
+      <div
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 14,
+        }}
+      >
+        {/* Prev */}
+        <motion.button
+          onClick={() => paginate(-1)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label="Previous project"
+          style={{
+            width: 38, height: 38, borderRadius: 10,
+            border: "1px solid rgba(167,139,250,0.2)",
+            background: "rgba(167,139,250,0.06)",
+            backdropFilter: "blur(10px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "rgba(167,139,250,0.75)", cursor: "pointer",
+          }}
+        >
+          <ChevronLeft size={16} />
+        </motion.button>
+
+        {/* Dot indicators */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }} role="tablist" aria-label="Project navigation">
+          {PROJECTS.map((p, i) => {
+            const isActive = i === activeIndex;
+            return (
+              <motion.button
+                key={p.id}
+                onClick={() => goTo(i)}
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`Go to ${p.title}`}
+                animate={{
+                  width: isActive ? 24 : 6,
+                  background: isActive ? p.accent : "rgba(255,255,255,0.18)",
+                  boxShadow: isActive ? `0 0 6px ${p.accent}80` : "none",
+                }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                style={{
+                  height: 6, borderRadius: 3, border: "none",
+                  cursor: "pointer", padding: 0, flexShrink: 0,
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Next */}
+        <motion.button
+          onClick={() => paginate(1)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label="Next project"
+          style={{
+            width: 38, height: 38, borderRadius: 10,
+            border: "1px solid rgba(167,139,250,0.2)",
+            background: "rgba(167,139,250,0.06)",
+            backdropFilter: "blur(10px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "rgba(167,139,250,0.75)", cursor: "pointer",
+          }}
+        >
+          <ChevronRight size={16} />
+        </motion.button>
+      </div>
+
+      {/* Counter label */}
+      <div style={{ textAlign: "center" }}>
+        <span
+          style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 11,
+            color: "rgba(167,139,250,0.5)",
+            letterSpacing: "0.08em",
+          }}
+        >
+          <span style={{ color: "rgba(167,139,250,0.85)", fontWeight: 600 }}>{activeIndex + 1}</span>
+          {" / "}
+          {PROJECTS.length}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 // ─── Mobile Section ───────────────────────────────────────────────────────────
 
 const ProjectsMobile: React.FC = () => {
@@ -259,16 +427,14 @@ const ProjectsMobile: React.FC = () => {
         .pm-title-accent { font-style: italic; background: linear-gradient(135deg, #a78bfa 0%, #818cf8 45%, #38bdf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: pmHue 8s ease-in-out infinite; }
         @keyframes pmHue { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
         .pm-desc { font-size: 14px; font-weight: 300; color: rgba(190,190,220,0.4); line-height: 1.75; margin: 0 0 36px; }
-        .pm-tap-hint { font-size: 11px; color: rgba(255,255,255,0.2); margin-bottom: 20px; letter-spacing: 0.03em; display: flex; align-items: center; gap: 6px; }
-        .pm-tap-hint::before { content: ''; display: block; width: 16px; height: 1px; background: rgba(255,255,255,0.15); }
-        .pm-cta { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(200,200,240,0.7); font-size: 13px; font-weight: 400; text-decoration: none; backdrop-filter: blur(12px); transition: all 0.25s; width: 100%; justify-content: center; }
+        .pm-cta { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(200,200,240,0.7); font-size: 13px; font-weight: 400; text-decoration: none; backdrop-filter: blur(12px); width: 100%; justify-content: center; }
         .pm-cta:hover { border-color: rgba(167,139,250,0.4); background: rgba(167,139,250,0.08); color: #a78bfa; }
         @media (max-width: 480px) { .pm-section { padding: 64px 0 56px; } .pm-inner { padding: 0 14px; } }
       `}</style>
 
       <section className="pm-section" ref={sectionRef}>
         <div className="pm-inner">
-          <motion.div variants={stagger} initial="hidden" animate={isInView ? "show" : "hidden"} style={{ marginBottom: 40 }}>
+          <motion.div variants={stagger} initial="hidden" animate={isInView ? "show" : "hidden"} style={{ marginBottom: 32 }}>
             <motion.div variants={fadeUp}>
               <div className="pm-eyebrow">My Work</div>
             </motion.div>
@@ -282,20 +448,15 @@ const ProjectsMobile: React.FC = () => {
             <motion.div variants={fadeUp}>
               <StatsStrip />
             </motion.div>
-            <motion.p className="pm-tap-hint" variants={fadeUp}>
-              Tap any card to expand
-            </motion.p>
           </motion.div>
 
           <motion.div
             variants={stagger}
             initial="hidden"
             animate={isInView ? "show" : "hidden"}
-            style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 40 }}
+            style={{ marginBottom: 36 }}
           >
-            {PROJECTS.map((project, i) => (
-              <MobileCard key={project.id} project={project} index={i} />
-            ))}
+            <MobileProjectsCarousel isInView={isInView} />
           </motion.div>
 
           <motion.div variants={fadeUp} initial="hidden" animate={isInView ? "show" : "hidden"}>

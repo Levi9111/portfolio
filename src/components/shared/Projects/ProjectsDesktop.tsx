@@ -268,6 +268,8 @@ const ProjectCard: React.FC<{ project: (typeof PROJECTS)[number] }> = ({ project
 
 const ProjectsCarousel: React.FC<{ isInView: boolean }> = ({ isInView }) => {
   const [[activeIndex, direction], setPage] = useState([0, 0]);
+  const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const paginate = useCallback((newDirection: number) => {
     setPage(([current]) => {
@@ -280,10 +282,37 @@ const ProjectsCarousel: React.FC<{ isInView: boolean }> = ({ isInView }) => {
     setPage(([current]) => [index, index > current ? 1 : -1]);
   }, []);
 
+  useEffect(() => {
+    if (!isInView || isPaused) return;
+
+    const intervalTime = 50; // update every 50ms
+    const step = (intervalTime / 5000) * 100; // 5000ms total duration
+
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          paginate(1);
+          return 0;
+        }
+        return prev + step;
+      });
+    }, intervalTime);
+
+    return () => clearInterval(timer);
+  }, [isInView, isPaused, paginate]);
+
+  useEffect(() => {
+    setProgress(0);
+  }, [activeIndex]);
+
   const project = PROJECTS[activeIndex];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, minWidth: 0 }}>
+    <div
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      style={{ display: "flex", flexDirection: "column", gap: 20, minWidth: 0 }}
+    >
       {/* Card stage */}
       <div style={{ position: "relative", minHeight: 520, overflow: "hidden" }}>
         <AnimatePresence mode="popLayout" custom={direction} initial={false}>
@@ -299,6 +328,29 @@ const ProjectsCarousel: React.FC<{ isInView: boolean }> = ({ isInView }) => {
             <ProjectCard project={project} />
           </motion.div>
         </AnimatePresence>
+      </div>
+
+      {/* Progress bar loader */}
+      <div
+        style={{
+          width: "100%",
+          height: 3,
+          background: "rgba(255, 255, 255, 0.05)",
+          borderRadius: 2,
+          overflow: "hidden",
+          position: "relative",
+          marginTop: 6,
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${progress}%`,
+            background: `linear-gradient(90deg, transparent, ${project.accent}, ${project.accent}, transparent)`,
+            boxShadow: `0 0 10px ${project.accent}`,
+            transition: "width 0.05s linear",
+          }}
+        />
       </div>
 
       {/* Controls row: prev · dots · next */}
