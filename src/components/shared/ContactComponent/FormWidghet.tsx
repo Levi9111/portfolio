@@ -172,6 +172,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
   const [showModes, setShowModes] = useState(false);
   const [aiWarning, setAiWarning] = useState("");
   const [aiError, setAiError] = useState("");
+  const [isGeneratingSubject, setIsGeneratingSubject] = useState(false);
 
   const handleModeClick = async (mode: 'Enhance' | 'Shorten' | 'Lengthen' | 'Casual' | 'Formal') => {
     setShowModes(false);
@@ -237,14 +238,57 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
     }
     setStatus("loading");
 
+    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+    const finalFormData = { ...formData };
+
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+      // If subject is empty, generate it via AI first
+      if (!formData.subject.trim()) {
+        setIsGeneratingSubject(true);
+        try {
+          const aiResponse = await fetch(`${baseUrl}/ai-assist`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userMessage: formData.message,
+              mode: "generate-subject",
+            }),
+          });
+
+          if (aiResponse.ok) {
+            const aiData = await aiResponse.json();
+            if (aiData.success && aiData.improvedText) {
+              const generatedSubject = aiData.improvedText.trim();
+              
+              // 1. Update form data state so it appears in the text field for the user to see
+              setFormData(prev => ({ ...prev, subject: generatedSubject }));
+              
+              // 2. Set the subject in our local variable that will be sent
+              finalFormData.subject = generatedSubject;
+
+              // 3. Wait a moment (1200ms) so the user can visually see it
+              await new Promise(resolve => setTimeout(resolve, 1200));
+            }
+          }
+        } catch (aiErr) {
+          console.error("AI Subject generation failed:", aiErr);
+          const fallbackSubject = "Portfolio Inquiry";
+          setFormData(prev => ({ ...prev, subject: fallbackSubject }));
+          finalFormData.subject = fallbackSubject;
+          await new Promise(resolve => setTimeout(resolve, 800));
+        } finally {
+          setIsGeneratingSubject(false);
+        }
+      }
+
       const response = await fetch(`${baseUrl}/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(finalFormData),
       });
 
       if (!response.ok) {
@@ -665,7 +709,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
               {loading ? (
                 <>
                   <span className="cc-spinner" aria-hidden="true" />
-                  Sending…
+                  {isGeneratingSubject ? "Generating Subject…" : "Sending…"}
                 </>
               ) : status === "success" ? (
                 <>
