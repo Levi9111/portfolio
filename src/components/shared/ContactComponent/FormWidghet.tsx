@@ -174,7 +174,9 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
   const [aiError, setAiError] = useState("");
   const [isGeneratingSubject, setIsGeneratingSubject] = useState(false);
 
-  const handleModeClick = async (mode: 'Enhance' | 'Shorten' | 'Lengthen' | 'Casual' | 'Formal') => {
+  const handleModeClick = async (
+    mode: "Enhance" | "Shorten" | "Lengthen" | "Casual" | "Formal",
+  ) => {
     setShowModes(false);
     setAiWarning("");
     setAiError("");
@@ -183,15 +185,21 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
 
     // Validation: if the textarea is empty or has fewer than 5 characters, prevent AI call
     if (!currentMsg || currentMsg.length < 5) {
-      setAiWarning("Please write at least 5 characters first so the AI can assist you!");
+      setAiWarning(
+        "Please write at least 5 characters first so the AI can assist you!",
+      );
       return;
     }
 
     setIsAiLoading(true);
     setAiStatus("✨ AI is rewriting...");
 
+    // Debounce / slight delay of 300ms to reduce unnecessary clicks
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+      const baseUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
       const response = await fetch(`${baseUrl}/ai-assist`, {
         method: "POST",
         headers: {
@@ -203,19 +211,30 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
         }),
       });
 
+      if (response.status === 429) {
+        const errData = await response.json().catch(() => ({}));
+        setAiError(
+          errData.error ||
+            "You have used the AI assistant too quickly. Please wait a minute and try again.",
+        );
+        return;
+      }
+
       if (!response.ok) {
         throw new Error("Could not enhance message right now.");
       }
 
       const data = await response.json();
       if (data.success && data.improvedText) {
-        setFormData(prev => ({ ...prev, message: data.improvedText }));
+        setFormData((prev) => ({ ...prev, message: data.improvedText }));
       } else {
         throw new Error("Could not enhance message right now.");
       }
     } catch (error) {
       console.error("AI Assist error:", error);
-      setAiError("Could not enhance message right now. Please try again in a moment.");
+      setAiError(
+        "Could not enhance message right now. Please try again in a moment.",
+      );
     } finally {
       setIsAiLoading(false);
       setAiStatus("");
@@ -238,7 +257,8 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
     }
     setStatus("loading");
 
-    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+    const baseUrl =
+      import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
     const finalFormData = { ...formData };
 
     try {
@@ -257,27 +277,37 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
             }),
           });
 
-          if (aiResponse.ok) {
+          if (aiResponse.status === 429) {
+            const errData = await aiResponse.json().catch(() => ({}));
+            setAiError(
+              errData.error ||
+                "You have used the AI assistant too quickly. Please wait a minute and try again.",
+            );
+            const fallbackSubject = "Portfolio Inquiry";
+            setFormData((prev) => ({ ...prev, subject: fallbackSubject }));
+            finalFormData.subject = fallbackSubject;
+            await new Promise((resolve) => setTimeout(resolve, 800));
+          } else if (aiResponse.ok) {
             const aiData = await aiResponse.json();
             if (aiData.success && aiData.improvedText) {
               const generatedSubject = aiData.improvedText.trim();
-              
+
               // 1. Update form data state so it appears in the text field for the user to see
-              setFormData(prev => ({ ...prev, subject: generatedSubject }));
-              
+              setFormData((prev) => ({ ...prev, subject: generatedSubject }));
+
               // 2. Set the subject in our local variable that will be sent
               finalFormData.subject = generatedSubject;
 
               // 3. Wait a moment (1200ms) so the user can visually see it
-              await new Promise(resolve => setTimeout(resolve, 1200));
+              await new Promise((resolve) => setTimeout(resolve, 1200));
             }
           }
         } catch (aiErr) {
           console.error("AI Subject generation failed:", aiErr);
           const fallbackSubject = "Portfolio Inquiry";
-          setFormData(prev => ({ ...prev, subject: fallbackSubject }));
+          setFormData((prev) => ({ ...prev, subject: fallbackSubject }));
           finalFormData.subject = fallbackSubject;
-          await new Promise(resolve => setTimeout(resolve, 800));
+          await new Promise((resolve) => setTimeout(resolve, 800));
         } finally {
           setIsGeneratingSubject(false);
         }
