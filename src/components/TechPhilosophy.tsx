@@ -240,169 +240,278 @@ const CodeSnippetWidget: React.FC = () => {
   // Cursor appears once every line has finished animating in
   const totalRevealTime = 0.5 + CODE_LINES.length * 0.09;
 
+  const pipelineSteps = [
+    {
+      num: "01",
+      title: "Validation Boundary",
+      tech: "Zod Schema",
+      desc: "Incoming JSON is parsed and sanitized at the edge. Invalid payloads reject automatically before hitting the controller.",
+      color: "#a78bfa"
+    },
+    {
+      num: "02",
+      title: "Boilerplate Rescue",
+      tech: "catchAsync wrapper",
+      desc: "Eliminates global try-catch noise. Unhandled controller errors bubble cleanly to the main express middleware handler.",
+      color: "#34d399"
+    },
+    {
+      num: "03",
+      title: "Operational Failure",
+      tech: "AppError class",
+      desc: "Extends Native Error class with explicit HTTP status codes, differentiating operational failures from server crashes.",
+      color: "#fbbf24"
+    },
+    {
+      num: "04",
+      title: "Unified Delivery",
+      tech: "sendResponse helper",
+      desc: "Enforces a strict global API response shape: statusCode, success status message, and typed data payload.",
+      color: "#60a5fa"
+    }
+  ];
+
   return (
-    <motion.div
-      ref={widgetRef}
-      variants={scaleIn}
-      style={{
-        borderRadius: 18,
-        overflow: "hidden",
-        border: "1px solid rgba(139,92,246,0.2)",
-        background: "rgba(3,2,12,0.75)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-      }}
-    >
-      {/* Title bar */}
-      <div
+    <>
+      {/* Desktop View */}
+      <motion.div
+        ref={widgetRef}
+        variants={scaleIn}
+        className="phi-widget-desktop"
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "12px 16px",
-          borderBottom: "0.5px solid rgba(255,255,255,0.07)",
-          background: "rgba(255,255,255,0.02)",
+          borderRadius: 18,
+          overflow: "hidden",
+          border: "1px solid rgba(139,92,246,0.2)",
+          background: "rgba(3,2,12,0.75)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          width: "100%",
+          boxSizing: "border-box"
         }}
       >
+        {/* Title bar */}
         <div
-          style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}
-        >
-          <div
-            style={{ display: "flex", gap: 5, flexShrink: 0 }}
-            aria-hidden="true"
-          >
-            {["#f87171", "#fbbf24", "#34d399"].map((c) => (
-              <span
-                key={c}
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: c,
-                  opacity: 0.6,
-                }}
-              />
-            ))}
-          </div>
-          <span
-            style={{
-              marginLeft: 6,
-              fontSize: 11,
-              color: "rgba(200,200,240,0.4)",
-              fontFamily: "'DM Sans',sans-serif",
-              letterSpacing: "0.3px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            user.controller.ts
-          </span>
-        </div>
-        <motion.button
-          onClick={handleCopy}
-          whileTap={{ scale: 0.94 }}
-          aria-label="Copy code snippet"
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 5,
-            padding: "5px 10px",
-            borderRadius: 7,
-            border: "1px solid rgba(255,255,255,0.08)",
-            background: "rgba(255,255,255,0.03)",
-            cursor: "pointer",
-            fontSize: 10.5,
-            color: copied ? "#34d399" : "rgba(200,200,240,0.55)",
-            fontFamily: "'DM Sans',sans-serif",
-            transition: "color 0.2s",
-            flexShrink: 0,
+            justifyContent: "space-between",
+            padding: "12px 16px",
+            borderBottom: "0.5px solid rgba(255,255,255,0.07)",
+            background: "rgba(255,255,255,0.02)",
           }}
         >
-          {copied ? <Check size={12} /> : <Copy size={12} />}
-          {copied ? "Copied" : "Copy"}
-        </motion.button>
-      </div>
-
-      {/* Code body — no horizontal scroll: smaller font, tighter indent, lines sized to fit */}
-      <div style={{ padding: "16px 18px", overflowX: "hidden" }}>
-        {CODE_LINES.map((line, i) => (
-          <motion.div
-            key={i}
-            custom={i}
-            variants={lineVariants}
-            initial="hidden"
-            animate={isInView ? "show" : "hidden"}
+          <div
+            style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}
+          >
+            <div
+              style={{ display: "flex", gap: 5, flexShrink: 0 }}
+              aria-hidden="true"
+            >
+              {["#f87171", "#fbbf24", "#34d399"].map((c) => (
+                <span
+                  key={c}
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: c,
+                    opacity: 0.6,
+                  }}
+                />
+              ))}
+            </div>
+            <span
+              style={{
+                marginLeft: 6,
+                fontSize: 11,
+                color: "rgba(200,200,240,0.4)",
+                fontFamily: "'DM Sans',sans-serif",
+                letterSpacing: "0.3px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              user.controller.ts
+            </span>
+          </div>
+          <motion.button
+            onClick={handleCopy}
+            whileTap={{ scale: 0.94 }}
+            aria-label="Copy code snippet"
             style={{
-              fontFamily: "'JetBrains Mono','Fira Code',monospace",
-              fontSize: 11,
-              lineHeight: 1.85,
-              color: line.color ?? "rgba(220,220,245,0.75)",
-              paddingLeft: (line.indent ?? 0) * 14,
-              whiteSpace: "pre",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              borderRadius: 7,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.03)",
+              cursor: "pointer",
+              fontSize: 10.5,
+              color: copied ? "#34d399" : "rgba(200,200,240,0.55)",
+              fontFamily: "'DM Sans',sans-serif",
+              transition: "color 0.2s",
+              flexShrink: 0,
             }}
           >
-            {line.text || "\u00A0"}
-          </motion.div>
-        ))}
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+            {copied ? "Copied" : "Copy"}
+          </motion.button>
+        </div>
 
-        {/* Blinking cursor — appears after the last line finishes typing in */}
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ delay: totalRevealTime, duration: 0.2 }}
-          style={{
-            display: "inline-block",
-            width: 6,
-            height: 12,
-            background: "#a78bfa",
-            marginLeft: 2,
-            animation: isInView
-              ? "philCursorBlink 1s step-end infinite"
-              : "none",
-          }}
-          aria-hidden="true"
-        />
-      </div>
+        {/* Code body — no horizontal scroll: smaller font, tighter indent, lines sized to fit */}
+        <div style={{ padding: "16px 18px", overflowX: "hidden" }}>
+          {CODE_LINES.map((line, i) => (
+            <motion.div
+              key={i}
+              custom={i}
+              variants={lineVariants}
+              initial="hidden"
+              animate={isInView ? "show" : "hidden"}
+              style={{
+                fontFamily: "'JetBrains Mono','Fira Code',monospace",
+                fontSize: 11,
+                lineHeight: 1.85,
+                color: line.color ?? "rgba(220,220,245,0.75)",
+                paddingLeft: (line.indent ?? 0) * 14,
+                whiteSpace: "pre",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {line.text || "\u00A0"}
+            </motion.div>
+          ))}
 
-      {/* Footer strip */}
-      <div
-        style={{
-          padding: "10px 16px",
-          borderTop: "0.5px solid rgba(255,255,255,0.06)",
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-        }}
-      >
-        <span
+          {/* Blinking cursor — appears after the last line finishes typing in */}
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ delay: totalRevealTime, duration: 0.2 }}
+            style={{
+              display: "inline-block",
+              width: 6,
+              height: 12,
+              background: "#a78bfa",
+              marginLeft: 2,
+              animation: isInView
+                ? "philCursorBlink 1s step-end infinite"
+                : "none",
+            }}
+            aria-hidden="true"
+          />
+        </div>
+
+        {/* Footer strip */}
+        <div
           style={{
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            background: "#34d399",
-            boxShadow: "0 0 6px rgba(52,211,153,0.6)",
-            display: "block",
-            flexShrink: 0,
-          }}
-          aria-hidden="true"
-        />
-        <span
-          style={{
-            fontSize: 10.5,
-            color: "rgba(200,200,240,0.35)",
-            fontFamily: "'DM Sans',sans-serif",
-            letterSpacing: "0.3px",
+            padding: "10px 16px",
+            borderTop: "0.5px solid rgba(255,255,255,0.06)",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
           }}
         >
-          Same pattern across every backend I ship
-        </span>
-      </div>
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: "#34d399",
+              boxShadow: "0 0 6px rgba(52,211,153,0.6)",
+              display: "block",
+              flexShrink: 0,
+            }}
+            aria-hidden="true"
+          />
+          <span
+            style={{
+              fontSize: 10.5,
+              color: "rgba(200,200,240,0.35)",
+              fontFamily: "'DM Sans',sans-serif",
+              letterSpacing: "0.3px",
+            }}
+          >
+            Same pattern across every backend I ship
+          </span>
+        </div>
+      </motion.div>
 
-      <style>{`@keyframes philCursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
-    </motion.div>
+      {/* Mobile View */}
+      <motion.div
+        variants={scaleIn}
+        initial="hidden"
+        animate={isInView ? "show" : "hidden"}
+        className="phi-widget-mobile"
+        style={{
+          width: "100%",
+          borderRadius: 20,
+          overflow: "hidden",
+          border: "1px solid rgba(139,92,246,0.18)",
+          background: "rgba(3,2,12,0.7)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          padding: "24px 20px",
+          boxSizing: "border-box"
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: 12 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", color: "rgba(200,200,240,0.5)", fontFamily: "'DM Sans', sans-serif" }}>
+            Pipeline Architecture
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", boxShadow: "0 0 6px #34d399" }} />
+            <span style={{ fontSize: 9, fontWeight: 600, color: "#34d399", fontFamily: "'DM Sans', sans-serif" }}>SECURE API</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {pipelineSteps.map((step) => (
+            <div
+              key={step.num}
+              style={{
+                padding: "14px 16px",
+                borderRadius: 14,
+                border: "1px solid rgba(255,255,255,0.04)",
+                background: "rgba(255,255,255,0.015)",
+                display: "flex",
+                gap: 12
+              }}
+            >
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  background: `${step.color}15`,
+                  border: `1px solid ${step.color}30`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: step.color,
+                  fontFamily: "'Syne', sans-serif",
+                  flexShrink: 0
+                }}
+              >
+                {step.num}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#fff" }}>{step.title}</span>
+                  <span style={{ fontSize: 8.5, padding: "1px 5px", borderRadius: 4, background: "rgba(255,255,255,0.06)", color: "rgba(200,200,250,0.6)", fontFamily: "'DM Sans', sans-serif" }}>{step.tech}</span>
+                </div>
+                <p style={{ fontSize: 10.5, color: "rgba(200,200,240,0.4)", lineHeight: 1.5, margin: "5px 0 0" }}>
+                  {step.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </>
   );
 };
 // ─── Tech Philosophy Section ──────────────────────────────────────────────────
@@ -481,12 +590,25 @@ const TechPhilosophy: React.FC = () => {
           align-items: start;
         }
 
+        .phi-widget-desktop {
+          display: block;
+        }
+        .phi-widget-mobile {
+          display: none;
+        }
+
         @media (max-width: 1000px) {
           .phi-body { grid-template-columns: 1fr; }
           .phi-body > *:last-child { max-width: 480px; margin: 0 auto; }
         }
         @media (max-width: 768px) {
           #philosophy-section { padding: 100px 0 80px; }
+          .phi-widget-desktop {
+            display: none !important;
+          }
+          .phi-widget-mobile {
+            display: block !important;
+          }
         }
       `}</style>
 
