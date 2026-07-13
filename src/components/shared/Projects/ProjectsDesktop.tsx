@@ -1,6 +1,6 @@
-import React, { useState, useRef } from "react";
-import { ExternalLink, Github, ArrowUpRight } from "lucide-react";
-import { motion, useInView, Variants } from "framer-motion";
+import React, { useState, useRef, useCallback } from "react";
+import { ExternalLink, Github, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, useInView, AnimatePresence, Variants } from "framer-motion";
 import DevProcess from "../DevProcess";
 import { PROJECTS } from "../../../data/projects";
 import ProjectVisual from "./ProjectVisuals";
@@ -19,33 +19,48 @@ const fadeUp: Variants = {
   show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] } },
 };
 
-const cardVariant: Variants = {
-  hidden: { opacity: 0, y: 48, filter: "blur(8px)" },
-  show: (i: number) => ({
-    opacity: 1, y: 0, filter: "blur(0px)",
-    transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: i * 0.13 },
+// Carousel slide directions
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? "60%" : "-60%",
+    opacity: 0,
+    filter: "blur(10px)",
+    scale: 0.94,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    filter: "blur(0px)",
+    scale: 1,
+    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+  },
+  exit: (direction: number) => ({
+    x: direction < 0 ? "60%" : "-60%",
+    opacity: 0,
+    filter: "blur(10px)",
+    scale: 0.94,
+    transition: { duration: 0.4, ease: [0.7, 0, 1, 0.3] },
   }),
 };
 
 // ─── Project Card ─────────────────────────────────────────────────────────────
 
-const ProjectCard: React.FC<{ project: (typeof PROJECTS)[number]; index: number }> = ({ project, index }) => {
+const ProjectCard: React.FC<{ project: (typeof PROJECTS)[number] }> = ({ project }) => {
   const [hovered, setHovered] = useState(false);
   const Icon = project.icon;
 
   return (
     <motion.article
-      variants={cardVariant}
-      custom={index}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      whileHover={{ y: -10, scale: 1.015 }}
-      transition={{ type: "spring", stiffness: 280, damping: 26 }}
+      whileHover={{ y: -6, scale: 1.01 }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
       style={{
         position: "relative", borderRadius: 22, overflow: "hidden",
         border: `1px solid ${hovered ? project.accent + "45" : "rgba(255,255,255,0.07)"}`,
         background: "rgba(5,3,15,0.5)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
         transition: "border-color 0.3s", display: "flex", flexDirection: "column",
+        width: "100%",
       }}
       aria-label={`${project.title} project`}
     >
@@ -249,6 +264,149 @@ const ProjectCard: React.FC<{ project: (typeof PROJECTS)[number]; index: number 
   );
 };
 
+// ─── Projects Carousel ────────────────────────────────────────────────────────
+
+const ProjectsCarousel: React.FC<{ isInView: boolean }> = ({ isInView }) => {
+  const [[activeIndex, direction], setPage] = useState([0, 0]);
+
+  const paginate = useCallback((newDirection: number) => {
+    setPage(([current]) => {
+      const next = (current + newDirection + PROJECTS.length) % PROJECTS.length;
+      return [next, newDirection];
+    });
+  }, []);
+
+  const goTo = useCallback((index: number) => {
+    setPage(([current]) => [index, index > current ? 1 : -1]);
+  }, []);
+
+  const project = PROJECTS[activeIndex];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, minWidth: 0 }}>
+      {/* Card stage */}
+      <div style={{ position: "relative", minHeight: 520, overflow: "hidden" }}>
+        <AnimatePresence mode="popLayout" custom={direction} initial={false}>
+          <motion.div
+            key={activeIndex}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            style={{ position: "absolute", inset: 0, width: "100%", willChange: "transform, opacity" }}
+          >
+            <ProjectCard project={project} />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Controls row: prev · dots · next */}
+      <div
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 18,
+        }}
+      >
+        {/* Prev */}
+        <motion.button
+          onClick={() => paginate(-1)}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.93 }}
+          aria-label="Previous project"
+          style={{
+            width: 40, height: 40, borderRadius: 12,
+            border: "1px solid rgba(167,139,250,0.2)",
+            background: "rgba(167,139,250,0.06)",
+            backdropFilter: "blur(10px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "rgba(167,139,250,0.75)", cursor: "pointer",
+            transition: "border-color 0.25s, background 0.25s",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = "rgba(167,139,250,0.5)";
+            (e.currentTarget as HTMLElement).style.background = "rgba(167,139,250,0.14)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = "rgba(167,139,250,0.2)";
+            (e.currentTarget as HTMLElement).style.background = "rgba(167,139,250,0.06)";
+          }}
+        >
+          <ChevronLeft size={18} />
+        </motion.button>
+
+        {/* Dot indicators */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }} role="tablist" aria-label="Project navigation">
+          {PROJECTS.map((p, i) => {
+            const isActive = i === activeIndex;
+            return (
+              <motion.button
+                key={p.id}
+                onClick={() => goTo(i)}
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`Go to ${p.title}`}
+                animate={{
+                  width: isActive ? 28 : 8,
+                  background: isActive ? p.accent : "rgba(255,255,255,0.18)",
+                  boxShadow: isActive ? `0 0 8px ${p.accent}80` : "none",
+                }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                style={{
+                  height: 8, borderRadius: 4, border: "none",
+                  cursor: "pointer", padding: 0, flexShrink: 0,
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Next */}
+        <motion.button
+          onClick={() => paginate(1)}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.93 }}
+          aria-label="Next project"
+          style={{
+            width: 40, height: 40, borderRadius: 12,
+            border: "1px solid rgba(167,139,250,0.2)",
+            background: "rgba(167,139,250,0.06)",
+            backdropFilter: "blur(10px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "rgba(167,139,250,0.75)", cursor: "pointer",
+            transition: "border-color 0.25s, background 0.25s",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = "rgba(167,139,250,0.5)";
+            (e.currentTarget as HTMLElement).style.background = "rgba(167,139,250,0.14)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = "rgba(167,139,250,0.2)";
+            (e.currentTarget as HTMLElement).style.background = "rgba(167,139,250,0.06)";
+          }}
+        >
+          <ChevronRight size={18} />
+        </motion.button>
+      </div>
+
+      {/* Counter label */}
+      <div style={{ textAlign: "center" }}>
+        <span
+          style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 11.5,
+            color: "rgba(167,139,250,0.5)",
+            letterSpacing: "0.08em",
+          }}
+        >
+          <span style={{ color: "rgba(167,139,250,0.85)", fontWeight: 600 }}>{activeIndex + 1}</span>
+          {" / "}
+          {PROJECTS.length}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 // ─── Projects Section ─────────────────────────────────────────────────────────
 
 const ProjectsDesktop: React.FC = () => {
@@ -329,14 +487,12 @@ const ProjectsDesktop: React.FC = () => {
           <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24, alignItems: "start" }} className="proj-layout">
             <DevProcess />
             <motion.div
-              variants={stagger}
-              initial="hidden"
-              animate={isInView ? "show" : "hidden"}
-              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(440px, 1fr))", gap: 28 }}
+              initial={{ opacity: 0, y: 40, filter: "blur(8px)" }}
+              animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+              transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+              style={{ minWidth: 0 }}
             >
-              {PROJECTS.map((project, i) => (
-                <ProjectCard key={project.id} project={project} index={i} />
-              ))}
+              <ProjectsCarousel isInView={isInView} />
             </motion.div>
           </div>
 
@@ -381,7 +537,6 @@ const ProjectsDesktop: React.FC = () => {
         <style>{`
           @media (max-width: 1100px) {
             .proj-layout { grid-template-columns: 1fr; }
-            .proj-layout > *:last-child { max-width: 360px; margin: 0 auto; }
           }
         `}</style>
       </section>

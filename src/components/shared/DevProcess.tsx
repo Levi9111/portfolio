@@ -781,9 +781,6 @@ const DevProcess: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Contribution heatmap ── */}
-      {/* TODO: Need to replace it with actual Github stats */}
-      <ContributionHeatmap seen={seen} />
     </div>
   );
 };
