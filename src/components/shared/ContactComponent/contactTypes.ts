@@ -11,6 +11,7 @@ export interface FormData {
   email: string;
   subject: string;
   message: string;
+  originalMessage?: string;
 }
 
 export interface SocialLink {

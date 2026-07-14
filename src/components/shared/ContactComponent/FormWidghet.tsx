@@ -166,6 +166,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
     email: "",
     subject: "",
     message: "",
+    originalMessage: "",
   });
   const [status, setStatus] = useState<FormStatus>("idle");
   const loading = status === "loading";
@@ -235,7 +236,11 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
 
       const data = await response.json();
       if (data.success && data.improvedText) {
-        setFormData((prev) => ({ ...prev, message: data.improvedText }));
+        setFormData((prev) => ({
+          ...prev,
+          originalMessage: prev.originalMessage || prev.message,
+          message: data.improvedText,
+        }));
       } else {
         throw new Error("Invalid response format from AI Assist endpoint");
       }
@@ -337,7 +342,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
       }
 
       setStatus("success");
-      setFormData({ name: "", email: "", subject: "", message: "" });
+      setFormData({ name: "", email: "", subject: "", message: "", originalMessage: "" });
     } catch (error) {
       setStatus("error");
     }
