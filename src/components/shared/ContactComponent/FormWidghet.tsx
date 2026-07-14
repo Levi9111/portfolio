@@ -10,21 +10,6 @@ import { motion } from "framer-motion";
 import { stagger, fadeUp, fadeRight } from "./contactTypes";
 import type { FormData, FormStatus } from "./contactTypes";
 
-const getBaseUrl = (): string => {
-  const envUrl = import.meta.env.VITE_API_URL;
-  const isLocalhostDomain = 
-    window.location.hostname === "localhost" || 
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname.startsWith("192.168.");
-    
-  if (!isLocalhostDomain && envUrl && envUrl.includes("localhost")) {
-    console.warn("[API URL Guard] Detected localhost API URL in a production domain. Overriding with production API URL.");
-    return "https://portfolio-server-xf38.onrender.com/api/v1";
-  }
-  
-  return envUrl || "https://portfolio-server-xf38.onrender.com/api/v1";
-};
-
 // ─── Field ────────────────────────────────────────────────────────────────────
 
 interface FieldProps {
@@ -215,11 +200,15 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
     // Debounce / slight delay of 300ms to reduce unnecessary clicks
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-    try {
-      const baseUrl = getBaseUrl();
-      console.log(`[AI Assist] Initiating rewrite. Mode: "${mode}", Message: "${currentMsg}"`);
-      console.log(`[AI Assist] Fetching from endpoint: ${baseUrl}/ai-assist`);
+    const baseUrl = import.meta.env.VITE_API_URL;
+    if (!baseUrl) {
+      setAiError("API Server URL is not configured. Please define VITE_API_URL in your environment.");
+      setIsAiLoading(false);
+      setAiStatus("");
+      return;
+    }
 
+    try {
       const response = await fetch(`${baseUrl}/ai-assist`, {
         method: "POST",
         headers: {
@@ -231,11 +220,8 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
         }),
       });
 
-      console.log(`[AI Assist] Response Status: ${response.status} (${response.statusText})`);
-
       if (response.status === 429) {
         const errData = await response.json().catch(() => ({}));
-        console.warn(`[AI Assist] Rate limited (429). Error payload:`, errData);
         setAiError(
           errData.error ||
             "You have used the AI assistant too quickly. Please wait a minute and try again.",
@@ -244,21 +230,16 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
       }
 
       if (!response.ok) {
-        const errText = await response.text().catch(() => "No body");
-        console.error(`[AI Assist] Server returned non-ok status: ${response.status}. Body:`, errText);
-        throw new Error(`Server returned status ${response.status}`);
+        throw new Error("Could not enhance message right now.");
       }
 
       const data = await response.json();
-      console.log(`[AI Assist] Successful response payload:`, data);
       if (data.success && data.improvedText) {
         setFormData((prev) => ({ ...prev, message: data.improvedText }));
       } else {
-        console.error(`[AI Assist] Response success field is false or improvedText is missing:`, data);
         throw new Error("Invalid response format from AI Assist endpoint");
       }
     } catch (error) {
-      console.error("[AI Assist Client Exception] Error during fetch or response parsing:", error);
       setAiError(
         "Could not enhance message right now. Please try again in a moment.",
       );
@@ -284,16 +265,19 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
     }
     setStatus("loading");
 
-    const baseUrl = getBaseUrl();
+    const baseUrl = import.meta.env.VITE_API_URL;
+    if (!baseUrl) {
+      setStatus("error");
+      setAiError("API Server URL is not configured. Please define VITE_API_URL in your environment.");
+      return;
+    }
     const finalFormData = { ...formData };
 
     try {
       // If subject is empty, generate it via AI first
       if (!formData.subject.trim()) {
-        console.log("[Submit Form] Subject is empty. Requesting AI Subject generation.");
         setIsGeneratingSubject(true);
         try {
-          console.log(`[Submit Form] Fetching AI subject from: ${baseUrl}/ai-assist`);
           const aiResponse = await fetch(`${baseUrl}/ai-assist`, {
             method: "POST",
             headers: {
@@ -305,11 +289,8 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
             }),
           });
 
-          console.log(`[Submit Form] AI Subject response status: ${aiResponse.status} (${aiResponse.statusText})`);
-
           if (aiResponse.status === 429) {
             const errData = await aiResponse.json().catch(() => ({}));
-            console.warn("[Submit Form] AI Subject rate limited (429):", errData);
             setAiError(
               errData.error ||
                 "You have used the AI assistant too quickly. Please wait a minute and try again.",
@@ -318,13 +299,8 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
             setFormData((prev) => ({ ...prev, subject: fallbackSubject }));
             finalFormData.subject = fallbackSubject;
             await new Promise((resolve) => setTimeout(resolve, 800));
-          } else if (!aiResponse.ok) {
-            const errText = await aiResponse.text().catch(() => "No body");
-            console.error(`[Submit Form] AI Subject response not ok: ${aiResponse.status}. Body:`, errText);
-            throw new Error(`AI Subject server error ${aiResponse.status}`);
-          } else {
+          } else if (aiResponse.ok) {
             const aiData = await aiResponse.json();
-            console.log("[Submit Form] AI Subject success payload:", aiData);
             if (aiData.success && aiData.improvedText) {
               const generatedSubject = aiData.improvedText.trim();
 
@@ -336,13 +312,9 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
 
               // 3. Wait a moment (1200ms) so the user can visually see it
               await new Promise((resolve) => setTimeout(resolve, 1200));
-            } else {
-              console.error("[Submit Form] AI Subject response format invalid:", aiData);
-              throw new Error("Invalid AI Subject response format");
             }
           }
         } catch (aiErr) {
-          console.error("[Submit Form AI Exception] AI Subject generation failed:", aiErr);
           const fallbackSubject = "Portfolio Inquiry";
           setFormData((prev) => ({ ...prev, subject: fallbackSubject }));
           finalFormData.subject = fallbackSubject;
@@ -352,9 +324,6 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
         }
       }
 
-      console.log(`[Submit Form] Submitting message to backend. Target URL: ${baseUrl}/messages`);
-      console.log(`[Submit Form] Payload:`, finalFormData);
-
       const response = await fetch(`${baseUrl}/messages`, {
         method: "POST",
         headers: {
@@ -363,21 +332,13 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
         body: JSON.stringify(finalFormData),
       });
 
-      console.log(`[Submit Form] Message submit response status: ${response.status} (${response.statusText})`);
-
       if (!response.ok) {
-        const errText = await response.text().catch(() => "No body");
-        console.error(`[Submit Form] Message submit response not ok: ${response.status}. Body:`, errText);
-        throw new Error(`Message server error ${response.status}`);
+        throw new Error("Failed to send message");
       }
-
-      const resData = await response.json().catch(() => ({}));
-      console.log("[Submit Form] Message submitted successfully. Response data:", resData);
 
       setStatus("success");
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error) {
-      console.error("[Submit Form Client Exception] Error sending message:", error);
       setStatus("error");
     }
   };
