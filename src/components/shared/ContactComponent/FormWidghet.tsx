@@ -199,7 +199,8 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
 
     try {
       const baseUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+        import.meta.env.VITE_API_URL ||
+        "https://portfolio-server-xf38.onrender.com/api/v1";
       const response = await fetch(`${baseUrl}/ai-assist`, {
         method: "POST",
         headers: {
@@ -258,7 +259,8 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
     setStatus("loading");
 
     const baseUrl =
-      import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+      import.meta.env.VITE_API_URL ||
+      "https://portfolio-server-xf38.onrender.com/api/v1";
     const finalFormData = { ...formData };
 
     try {
