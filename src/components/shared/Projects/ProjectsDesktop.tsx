@@ -673,165 +673,67 @@ const ProjectsDesktop: React.FC = () => {
   const isInView = useInView(sectionRef, { once: true, margin: "-10%" });
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
-
-        #projects-section {
-          font-family: 'Outfit', sans-serif;
-          position: relative;
-          padding: 140px 0 120px;
-          background: transparent;
-          overflow: visible;
-        }
-        #projects-section::before {
-          content: '';
-          position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.25), transparent);
-          pointer-events: none;
-        }
-        .proj-eyebrow {
-          display: inline-flex; align-items: center; gap: 10px;
-          padding: 7px 16px; border-radius: 100px;
-          border: 1px solid rgba(139,92,246,0.2);
-          background: rgba(5,3,15,0.5); backdrop-filter: blur(12px);
-          font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
-          color: rgba(167,139,250,0.85); margin-bottom: 20px;
-        }
-        .proj-eyebrow::before { content: ''; display: block; width: 20px; height: 1px; background: rgba(139,92,246,0.5); }
-        .proj-title { font-family: 'Instrument Serif', serif; font-size: clamp(44px, 7vw, 76px); line-height: 1.05; color: #fff; letter-spacing: -1.5px; }
-        .proj-title-accent {
-          font-style: italic;
-          background: linear-gradient(135deg, #a78bfa 0%, #818cf8 45%, #38bdf8 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-          animation: projHue 8s ease-in-out infinite;
-        }
-        @keyframes projHue { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
-        .proj-divider {
-          width: 64px; height: 1px; margin: 24px auto 0;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent);
-          position: relative;
-        }
-        .proj-divider::after {
-          content: ''; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
-          width: 4px; height: 4px; border-radius: 50%; background: #a78bfa; box-shadow: 0 0 8px #a78bfa;
-        }
-        .proj-desc { font-size: 15px; font-weight: 300; color: rgba(190,190,220,0.45); max-width: 520px; line-height: 1.8; margin: 20px auto 0; }
-        @media (max-width: 768px) { #projects-section { padding: 100px 0 80px; } }
-      `}</style>
-
-      <section id="projects-section" ref={sectionRef}>
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1,
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "0 24px",
-          }}
+    <section id="projects-section" ref={sectionRef}>
+      <div className="proj-container">
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          className="proj-header"
         >
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate={isInView ? "show" : "hidden"}
-            style={{ textAlign: "center", marginBottom: 72 }}
-          >
-            <motion.div variants={fadeUp}>
-              <div className="proj-eyebrow">My Work</div>
-            </motion.div>
-            <motion.h2 className="proj-title" variants={fadeUp}>
-              Featured <span className="proj-title-accent">Projects</span>
-            </motion.h2>
-            <motion.div variants={fadeUp}>
-              <div className="proj-divider" />
-            </motion.div>
-            <motion.p className="proj-desc" variants={fadeUp}>
-              Multi-app ecosystems, an open-source CLI, and experimental builds
-              — each shipped with full-stack ownership across client, server,
-              and beyond.
-            </motion.p>
+          <motion.div variants={fadeUp}>
+            <div className="proj-eyebrow">My Work</div>
           </motion.div>
+          <motion.h2 className="proj-title" variants={fadeUp}>
+            Featured <span className="proj-title-accent">Projects</span>
+          </motion.h2>
+          <motion.div variants={fadeUp}>
+            <div className="proj-divider" />
+          </motion.div>
+          <motion.p className="proj-desc" variants={fadeUp}>
+            Multi-app ecosystems, an open-source CLI, and experimental builds
+            — each shipped with full-stack ownership across client, server,
+            and beyond.
+          </motion.p>
+        </motion.div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "300px 1fr",
-              gap: 24,
-              alignItems: "start",
-            }}
-            className="proj-layout"
-          >
-            <DevProcess />
-            <motion.div
-              initial={{ opacity: 0, y: 40, filter: "blur(8px)" }}
-              animate={
-                isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}
-              }
-              transition={{
-                duration: 0.85,
-                ease: [0.16, 1, 0.3, 1],
-                delay: 0.2,
-              }}
-              style={{ minWidth: 0 }}
-            >
-              <ProjectsCarousel isInView={isInView} />
-            </motion.div>
-          </div>
-
+        <div className="proj-layout">
+          <DevProcess />
           <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate={isInView ? "show" : "hidden"}
-            style={{ textAlign: "center", marginTop: 56 }}
+            initial={{ opacity: 0, y: 40, filter: "blur(8px)" }}
+            animate={
+              isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}
+            }
+            transition={{
+              duration: 0.85,
+              ease: [0.16, 1, 0.3, 1],
+              delay: 0.2,
+            }}
+            style={{ minWidth: 0 }}
           >
-            <a
-              href="https://github.com/levi9111"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "14px 32px",
-                borderRadius: 14,
-                border: "1px solid rgba(255,255,255,0.1)",
-                background: "rgba(255,255,255,0.04)",
-                color: "rgba(200,200,240,0.7)",
-                fontSize: 14,
-                fontWeight: 400,
-                textDecoration: "none",
-                backdropFilter: "blur(12px)",
-                transition: "all 0.25s",
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.borderColor = "rgba(167,139,250,0.4)";
-                el.style.background = "rgba(167,139,250,0.08)";
-                el.style.color = "#a78bfa";
-                el.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.borderColor = "rgba(255,255,255,0.1)";
-                el.style.background = "rgba(255,255,255,0.04)";
-                el.style.color = "rgba(200,200,240,0.7)";
-                el.style.transform = "none";
-              }}
-            >
-              <Github size={18} />
-              View All on GitHub — @levi9111
-              <ArrowUpRight size={16} style={{ opacity: 0.6 }} />
-            </a>
+            <ProjectsCarousel isInView={isInView} />
           </motion.div>
         </div>
 
-        <style>{`
-          @media (max-width: 1100px) {
-            .proj-layout { grid-template-columns: 1fr; }
-          }
-        `}</style>
-      </section>
-    </>
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          className="proj-github-wrapper"
+        >
+          <a
+            href="https://github.com/levi9111"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="proj-github-btn"
+          >
+            <Github size={18} />
+            View All on GitHub — @levi9111
+            <ArrowUpRight size={16} style={{ opacity: 0.6 }} />
+          </a>
+        </motion.div>
+      </div>
+    </section>
   );
 };
 

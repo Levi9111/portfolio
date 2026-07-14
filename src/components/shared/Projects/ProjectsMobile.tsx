@@ -415,58 +415,45 @@ const ProjectsMobile: React.FC = () => {
   const isInView = useInView(sectionRef, { once: true, margin: "-8%" });
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
-        .pm-section { font-family: 'Outfit', sans-serif; position: relative; padding: 80px 0 72px; background: transparent; overflow: visible; }
-        .pm-section::before { content: ''; position: absolute; top: 0; left: 5%; right: 5%; height: 1px; background: linear-gradient(90deg, transparent, rgba(139,92,246,0.25), transparent); pointer-events: none; }
-        .pm-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 0 20px; }
-        .pm-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 13px; border-radius: 100px; border: 1px solid rgba(139,92,246,0.2); background: rgba(5,3,15,0.5); backdrop-filter: blur(12px); font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: rgba(167,139,250,0.85); margin-bottom: 16px; }
-        .pm-eyebrow::before { content: ''; display: block; width: 16px; height: 1px; background: rgba(139,92,246,0.5); }
-        .pm-title { font-family: 'Instrument Serif', serif; font-size: clamp(36px, 9vw, 52px); line-height: 1.08; color: #fff; letter-spacing: -1px; margin: 0 0 12px; }
-        .pm-title-accent { font-style: italic; background: linear-gradient(135deg, #a78bfa 0%, #818cf8 45%, #38bdf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: pmHue 8s ease-in-out infinite; }
-        @keyframes pmHue { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
-        .pm-desc { font-size: 14px; font-weight: 300; color: rgba(190,190,220,0.4); line-height: 1.75; margin: 0 0 36px; }
-        .pm-cta { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(200,200,240,0.7); font-size: 13px; font-weight: 400; text-decoration: none; backdrop-filter: blur(12px); width: 100%; justify-content: center; }
-        .pm-cta:hover { border-color: rgba(167,139,250,0.4); background: rgba(167,139,250,0.08); color: #a78bfa; }
-        @media (max-width: 480px) { .pm-section { padding: 64px 0 56px; } .pm-inner { padding: 0 14px; } }
-      `}</style>
-
-      <section className="pm-section" ref={sectionRef}>
-        <div className="pm-inner">
-          <motion.div variants={stagger} initial="hidden" animate={isInView ? "show" : "hidden"} style={{ marginBottom: 32 }}>
-            <motion.div variants={fadeUp}>
-              <div className="pm-eyebrow">My Work</div>
-            </motion.div>
-            <motion.h2 className="pm-title" variants={fadeUp}>
-              Featured <span className="pm-title-accent">Projects</span>
-            </motion.h2>
-            <motion.p className="pm-desc" variants={fadeUp}>
-              Multi-app ecosystems, an open-source CLI, and experimental builds — each shipped
-              with full-stack ownership across client, server, and beyond.
-            </motion.p>
-            <motion.div variants={fadeUp}>
-              <StatsStrip />
-            </motion.div>
+    <section className="pm-section" ref={sectionRef}>
+      <div className="pm-inner">
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          className="pm-header-wrap"
+        >
+          <motion.div variants={fadeUp}>
+            <div className="pm-eyebrow">My Work</div>
           </motion.div>
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate={isInView ? "show" : "hidden"}
-            style={{ marginBottom: 36 }}
-          >
-            <MobileProjectsCarousel isInView={isInView} />
+          <motion.h2 className="pm-title" variants={fadeUp}>
+            Featured <span className="pm-title-accent">Projects</span>
+          </motion.h2>
+          <motion.p className="pm-desc" variants={fadeUp}>
+            Multi-app ecosystems, an open-source CLI, and experimental builds — each shipped
+            with full-stack ownership across client, server, and beyond.
+          </motion.p>
+          <motion.div variants={fadeUp}>
+            <StatsStrip />
           </motion.div>
+        </motion.div>
 
-          <motion.div variants={fadeUp} initial="hidden" animate={isInView ? "show" : "hidden"}>
-            <a href="https://github.com/levi9111" target="_blank" rel="noopener noreferrer" className="pm-cta">
-              <Github size={16} /> View All on GitHub — @levi9111 <ArrowUpRight size={14} style={{ opacity: 0.6 }} />
-            </a>
-          </motion.div>
-        </div>
-      </section>
-    </>
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          className="pm-carousel-wrap"
+        >
+          <MobileProjectsCarousel isInView={isInView} />
+        </motion.div>
+
+        <motion.div variants={fadeUp} initial="hidden" animate={isInView ? "show" : "hidden"}>
+          <a href="https://github.com/levi9111" target="_blank" rel="noopener noreferrer" className="pm-cta">
+            <Github size={16} /> View All on GitHub — @levi9111 <ArrowUpRight size={14} className="pm-cta-arrow" />
+          </a>
+        </motion.div>
+      </div>
+    </section>
   );
 };
 
