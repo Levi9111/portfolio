@@ -1,11 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
-import { Send, CheckCircle2, XCircle, Sparkles, ChevronDown } from "lucide-react";
+import {
+  Send,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  ChevronDown,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { stagger, fadeUp, fadeRight } from "./contactTypes";
 import type { FormData, FormStatus } from "./contactTypes";
-
-
 
 // ─── Field ────────────────────────────────────────────────────────────────────
 
@@ -48,7 +51,7 @@ const Field: React.FC<FieldProps> = ({
 }) => {
   const [focused, setFocused] = useState(false);
   const isGlowing = focused || isAiLoading;
-  
+
   const base: React.CSSProperties = {
     width: "100%",
     outline: "none",
@@ -60,17 +63,17 @@ const Field: React.FC<FieldProps> = ({
     color: "#fff",
     background: isGlowing ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.03)",
     border: `1px solid ${
-      isAiLoading 
-        ? "rgba(139,92,246,0.8)" 
-        : focused 
-        ? "rgba(139,92,246,0.5)" 
-        : "rgba(255,255,255,0.08)"
+      isAiLoading
+        ? "rgba(139,92,246,0.8)"
+        : focused
+          ? "rgba(139,92,246,0.5)"
+          : "rgba(255,255,255,0.08)"
     }`,
     boxShadow: isAiLoading
       ? "0 0 15px rgba(139,92,246,0.25)"
-      : focused 
-      ? "0 0 0 3px rgba(139,92,246,0.1)" 
-      : "none",
+      : focused
+        ? "0 0 0 3px rgba(139,92,246,0.1)"
+        : "none",
     transition: "all 0.25s ease",
     backdropFilter: "blur(8px)",
     resize: "none" as const,
@@ -463,7 +466,8 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
           style={{ display: "flex", flexDirection: "column", gap: 16 }}
           {...({
             toolname: "send_contact_message",
-            tooldescription: "Send a contact form message or project inquiry directly to Shanjid Ahmad."
+            tooldescription:
+              "Send a contact form message or project inquiry directly to Shanjid Ahmad.",
           } as any)}
         >
           <div
@@ -512,7 +516,11 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
             required
             multiline
             rows={4}
-            placeholder={isAiLoading ? "AI is rewriting your message..." : "Tell me about your project, or just say hello!"}
+            placeholder={
+              isAiLoading
+                ? "AI is rewriting your message..."
+                : "Tell me about your project, or just say hello!"
+            }
             value={isAiLoading ? aiStatus : formData.message}
             onChange={handleChange}
             disabled={loading || isAiLoading}
@@ -520,8 +528,22 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
             toolparamdescription="The full content of the message or message details"
           />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: -4 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+              marginTop: -4,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                position: "relative",
+              }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <button
                   type="button"
@@ -533,54 +555,83 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
                     gap: 5,
                     padding: "6px 12px",
                     borderRadius: 8,
-                    background: (loading || isAiLoading)
-                      ? "rgba(255, 255, 255, 0.03)" 
-                      : "rgba(139, 92, 246, 0.12)",
-                    border: `1px solid ${(loading || isAiLoading) ? "rgba(255, 255, 255, 0.08)" : "rgba(139, 92, 246, 0.35)"}`,
-                    color: (loading || isAiLoading) ? "rgba(255, 255, 255, 0.3)" : "#c084fc",
+                    background:
+                      loading || isAiLoading
+                        ? "rgba(255, 255, 255, 0.03)"
+                        : "rgba(139, 92, 246, 0.12)",
+                    border: `1px solid ${loading || isAiLoading ? "rgba(255, 255, 255, 0.08)" : "rgba(139, 92, 246, 0.35)"}`,
+                    color:
+                      loading || isAiLoading
+                        ? "rgba(255, 255, 255, 0.3)"
+                        : "#c084fc",
                     fontSize: 12,
                     fontWeight: 500,
-                    cursor: (loading || isAiLoading) ? "not-allowed" : "pointer",
+                    cursor: loading || isAiLoading ? "not-allowed" : "pointer",
                     transition: "all 0.2s",
                     fontFamily: "'Outfit', sans-serif",
                     outline: "none",
                   }}
                   onMouseEnter={(e) => {
                     if (!(loading || isAiLoading)) {
-                      e.currentTarget.style.background = "rgba(139, 92, 246, 0.22)";
-                      e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.55)";
-                      e.currentTarget.style.boxShadow = "0 0 8px rgba(139, 92, 246, 0.25)";
+                      e.currentTarget.style.background =
+                        "rgba(139, 92, 246, 0.22)";
+                      e.currentTarget.style.borderColor =
+                        "rgba(139, 92, 246, 0.55)";
+                      e.currentTarget.style.boxShadow =
+                        "0 0 8px rgba(139, 92, 246, 0.25)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!(loading || isAiLoading)) {
-                      e.currentTarget.style.background = "rgba(139, 92, 246, 0.12)";
-                      e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.35)";
+                      e.currentTarget.style.background =
+                        "rgba(139, 92, 246, 0.12)";
+                      e.currentTarget.style.borderColor =
+                        "rgba(139, 92, 246, 0.35)";
                       e.currentTarget.style.boxShadow = "none";
                     }
                   }}
                 >
-                  <Sparkles size={13} className={(loading || isAiLoading) ? "" : "animate-pulse"} />
+                  <Sparkles
+                    size={13}
+                    className={loading || isAiLoading ? "" : "animate-pulse"}
+                  />
                   <span>AI Assist</span>
-                  <ChevronDown 
-                    size={11} 
-                    style={{ 
-                      transform: showModes ? "rotate(180deg)" : "none", 
-                      transition: "transform 0.2s ease" 
-                    }} 
+                  <ChevronDown
+                    size={11}
+                    style={{
+                      transform: showModes ? "rotate(180deg)" : "none",
+                      transition: "transform 0.2s ease",
+                    }}
                   />
                 </button>
 
                 {isAiLoading && (
-                  <span style={{ fontSize: 11, color: "#a78bfa", display: "flex", alignItems: "center", gap: 6 }}>
-                    <span className="cc-spinner" style={{ width: 12, height: 12, borderWidth: 1.5 }} />
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "#a78bfa",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span
+                      className="cc-spinner"
+                      style={{ width: 12, height: 12, borderWidth: 1.5 }}
+                    />
                     <span>AI is rewriting...</span>
                   </span>
                 )}
               </div>
-              
+
               {/* Character count */}
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", fontFamily: "'Outfit', sans-serif" }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "rgba(255,255,255,0.25)",
+                  fontFamily: "'Outfit', sans-serif",
+                }}
+              >
                 {formData.message.length} characters
               </span>
 
@@ -605,7 +656,8 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
                       background: "rgba(10, 6, 22, 0.96)",
                       border: "1px solid rgba(139, 92, 246, 0.25)",
                       borderRadius: 10,
-                      boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.7), 0 0 15px rgba(139, 92, 246, 0.1)",
+                      boxShadow:
+                        "0 10px 30px -10px rgba(0, 0, 0, 0.7), 0 0 15px rgba(139, 92, 246, 0.1)",
                       padding: "5px",
                       minWidth: 120,
                       backdropFilter: "blur(12px)",
@@ -614,7 +666,15 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
                       animation: "fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
                     }}
                   >
-                    {(["Enhance", "Shorten", "Lengthen", "Casual", "Formal"] as const).map((option) => (
+                    {(
+                      [
+                        "Enhance",
+                        "Shorten",
+                        "Lengthen",
+                        "Casual",
+                        "Formal",
+                      ] as const
+                    ).map((option) => (
                       <button
                         key={option}
                         type="button"
@@ -635,13 +695,15 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
                           fontFamily: "'Outfit', sans-serif",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(139, 92, 246, 0.18)";
+                          e.currentTarget.style.background =
+                            "rgba(139, 92, 246, 0.18)";
                           e.currentTarget.style.color = "#ffffff";
                           e.currentTarget.style.paddingLeft = "14px";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = "transparent";
-                          e.currentTarget.style.color = "rgba(220, 220, 255, 0.85)";
+                          e.currentTarget.style.color =
+                            "rgba(220, 220, 255, 0.85)";
                           e.currentTarget.style.paddingLeft = "12px";
                         }}
                       >
@@ -655,19 +717,29 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
 
             {/* Warnings & Errors */}
             {aiWarning && (
-              <motion.span 
+              <motion.span
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                style={{ fontSize: 11, color: "#fbbf24", fontFamily: "'Outfit', sans-serif", marginTop: 4 }}
+                style={{
+                  fontSize: 11,
+                  color: "#fbbf24",
+                  fontFamily: "'Outfit', sans-serif",
+                  marginTop: 4,
+                }}
               >
                 ⚠️ {aiWarning}
               </motion.span>
             )}
             {aiError && (
-              <motion.span 
+              <motion.span
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                style={{ fontSize: 11, color: "#f87171", fontFamily: "'Outfit', sans-serif", marginTop: 4 }}
+                style={{
+                  fontSize: 11,
+                  color: "#f87171",
+                  fontFamily: "'Outfit', sans-serif",
+                  marginTop: 4,
+                }}
               >
                 ❌ {aiError}
               </motion.span>
