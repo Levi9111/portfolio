@@ -285,7 +285,15 @@ const StatCard: React.FC<StatCardProps> = ({
 const AboutMobile: React.FC<{ isInView: boolean }> = ({ isInView }) => {
   return (
     <section id="about-section-mobile" className="about-mobile">
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 640, margin: "0 auto", padding: "0 20px" }}>
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          maxWidth: 640,
+          margin: "0 auto",
+          padding: "0 20px",
+        }}
+      >
         {/* Header */}
         <motion.div
           variants={stagger}
@@ -294,11 +302,18 @@ const AboutMobile: React.FC<{ isInView: boolean }> = ({ isInView }) => {
           style={{ textAlign: "center", marginBottom: 40 }}
         >
           <motion.div variants={fadeUp}>
-            <div className="about-eyebrow" style={{ fontSize: 9, padding: "5px 12px", marginBottom: 12 }}>
+            <div
+              className="about-eyebrow"
+              style={{ fontSize: 9, padding: "5px 12px", marginBottom: 12 }}
+            >
               Get to know me
             </div>
           </motion.div>
-          <motion.h2 className="about-title" style={{ fontSize: 38, letterSpacing: "-1.5px" }} variants={fadeUp}>
+          <motion.h2
+            className="about-title"
+            style={{ fontSize: 38, letterSpacing: "-1.5px" }}
+            variants={fadeUp}
+          >
             About <span className="about-title-accent">Me</span>
           </motion.h2>
           <motion.div variants={fadeUp}>
@@ -321,7 +336,13 @@ const AboutMobile: React.FC<{ isInView: boolean }> = ({ isInView }) => {
             padding: "0 10px",
           }}
         >
-          I am a <strong style={{ color: "#a78bfa", fontWeight: 500 }}>Full-Stack Developer</strong> with 5+ years of experience shipping production web applications. I build performance-first, type-safe codebases from front-end to deployment.
+          I am a{" "}
+          <strong style={{ color: "#a78bfa", fontWeight: 500 }}>
+            Full-Stack Developer
+          </strong>{" "}
+          with 5+ years of experience shipping production web applications. I
+          build performance-first, type-safe codebases from front-end to
+          deployment.
         </motion.div>
 
         {/* MobileActivityWidget */}
@@ -330,7 +351,14 @@ const AboutMobile: React.FC<{ isInView: boolean }> = ({ isInView }) => {
         </div>
 
         {/* Skill section */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 36 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+            marginBottom: 36,
+          }}
+        >
           <h3
             style={{
               fontFamily: "'Instrument Serif', serif",
@@ -340,7 +368,8 @@ const AboutMobile: React.FC<{ isInView: boolean }> = ({ isInView }) => {
               marginBottom: 4,
             }}
           >
-            My Tech <span style={{ fontStyle: "italic", color: "#34d399" }}>Stack</span>
+            My Tech{" "}
+            <span style={{ fontStyle: "italic", color: "#34d399" }}>Stack</span>
           </h3>
           {SKILLS.map((group) => {
             const Icon = group.icon;
@@ -355,7 +384,14 @@ const AboutMobile: React.FC<{ isInView: boolean }> = ({ isInView }) => {
                   backdropFilter: "blur(12px)",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 12,
+                  }}
+                >
                   <div
                     style={{
                       width: 32,

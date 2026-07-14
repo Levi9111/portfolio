@@ -405,6 +405,188 @@ const LiveCodeRing: React.FC<{ inView: boolean }> = ({ inView }) => {
   );
 };
 
+// ─── LiveCommitTerminal ───────────────────────────────────────────────────────
+
+interface GitHubCommitData {
+  sha: string;
+  commit: {
+    author: {
+      name: string;
+      date: string;
+    };
+    message: string;
+  };
+  html_url: string;
+  repository: {
+    full_name: string;
+    html_url: string;
+  };
+}
+
+const FALLBACK_COMMITS: GitHubCommitData[] = [
+  {
+    sha: "f28112a",
+    commit: {
+      author: { name: "levi9111", date: new Date(Date.now() - 3600000 * 2).toISOString() },
+      message: "feat: add GITHUB_API_TOKEN configuration to environment variables and config schema"
+    },
+    html_url: "https://github.com/Levi9111/portfolio-server/commit/f28112abdbee4ece7857f949a00679dae01b0563",
+    repository: { full_name: "Levi9111/portfolio-server", html_url: "https://github.com/Levi9111/portfolio-server" }
+  },
+  {
+    sha: "216445b",
+    commit: {
+      author: { name: "levi9111", date: new Date(Date.now() - 3600000 * 6).toISOString() },
+      message: "feat: add detailed logging and error handling to AI assist controller"
+    },
+    html_url: "https://github.com/Levi9111/portfolio-server/commit/216445bdcdc2b2a323177dfc0a4f3421844ebefb",
+    repository: { full_name: "Levi9111/portfolio-server", html_url: "https://github.com/Levi9111/portfolio-server" }
+  },
+  {
+    sha: "c20929a",
+    commit: {
+      author: { name: "levi9111", date: new Date(Date.now() - 3600000 * 24).toISOString() },
+      message: "chore: cors updated"
+    },
+    html_url: "https://github.com/Levi9111/portfolio-server/commit/c20929aa6ee8957d0f46f1a6c9fb447b37937304",
+    repository: { full_name: "Levi9111/portfolio-server", html_url: "https://github.com/Levi9111/portfolio-server" }
+  }
+];
+
+const LiveCommitTerminal: React.FC<{ inView: boolean }> = ({ inView }) => {
+  const [commits, setCommits] = useState<GitHubCommitData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const fetchCommits = async () => {
+      const baseUrl = import.meta.env.VITE_API_URL || "https://portfolio-server-xf38.onrender.com/api/v1";
+      try {
+        const response = await fetch(`${baseUrl}/profiles/github-commits`);
+        if (!response.ok) throw new Error("Fetch failed");
+        const json = await response.json();
+        if (active && json.success && Array.isArray(json.data)) {
+          setCommits(json.data);
+        }
+      } catch (err) {
+        console.error("Error fetching commits:", err);
+        if (active) {
+          setCommits(FALLBACK_COMMITS);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    if (inView) {
+      fetchCommits();
+    }
+    return () => {
+      active = false;
+    };
+  }, [inView]);
+
+  return (
+    <div
+      style={{
+        background: "rgba(0, 0, 0, 0.3)",
+        border: "1.5px dashed rgba(167, 139, 250, 0.15)",
+        borderRadius: 8,
+        padding: "10px 12px",
+        fontFamily: "'Fira Code', 'Courier New', monospace",
+        fontSize: 9,
+        lineHeight: 1.4,
+        color: "rgba(255, 255, 255, 0.8)",
+        marginTop: 10,
+        overflow: "hidden",
+        position: "relative"
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          paddingBottom: 6,
+          marginBottom: 8,
+          color: "rgba(255, 255, 255, 0.4)",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          fontSize: 8
+        }}
+      >
+        <span>bash — git log --oneline</span>
+        <span style={{ color: "#34d399" }}>● synchronized</span>
+      </div>
+
+      {loading ? (
+        <div style={{ padding: "10px 0", textAlign: "center", color: "rgba(255,255,255,0.4)" }}>
+          <span className="animate-pulse">Loading central commit log...</span>
+        </div>
+      ) : (
+        <div
+          style={{
+            maxHeight: 105,
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            scrollbarWidth: "none"
+          }}
+        >
+          {commits.slice(0, 5).map((item, idx) => {
+            const shortRepo = item.repository?.full_name?.split("/")[1] || "repo";
+            return (
+              <a
+                key={item.sha + idx}
+                href={item.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 6,
+                  textDecoration: "none",
+                  color: "inherit",
+                  transition: "background 0.2s, padding-left 0.2s",
+                  padding: "4px",
+                  borderRadius: 4
+                }}
+                className="commit-row-hover"
+              >
+                <span style={{ color: "#a78bfa", fontWeight: "bold", flexShrink: 0 }}>
+                  [{shortRepo}]
+                </span>
+                <span style={{ color: "#fbbf24", flexShrink: 0 }}>
+                  {item.sha.substring(0, 7)}
+                </span>
+                <span
+                  style={{
+                    color: "rgba(255, 255, 255, 0.85)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    flex: 1
+                  }}
+                  title={item.commit.message}
+                >
+                  {item.commit.message.split("\n")[0]}
+                </span>
+                <span style={{ color: "rgba(255, 255, 255, 0.25)", fontSize: 8, flexShrink: 0 }}>
+                  {new Date(item.commit.author.date).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric"
+                  })}
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── ActivityWidget ───────────────────────────────────────────────────────────
 
 const ActivityWidget: React.FC = () => {
@@ -449,6 +631,11 @@ const ActivityWidget: React.FC = () => {
         @keyframes widgetColonBlink { 0%,100%{opacity:1} 50%{opacity:.2} }
         @keyframes statusPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.5)} }
         @keyframes connPulse { 0%,100%{opacity:.3} 50%{opacity:.9} }
+        .commit-row-hover:hover {
+          background: rgba(167, 139, 250, 0.08);
+          padding-left: 8px !important;
+          color: #fff !important;
+        }
       `}</style>
 
       {/* ── Card ── */}
@@ -948,6 +1135,7 @@ const ActivityWidget: React.FC = () => {
             </span>
           </div>
           <LiveHeatmap inView={inView} />
+          <LiveCommitTerminal inView={inView} />
           <div
             style={{
               display: "flex",

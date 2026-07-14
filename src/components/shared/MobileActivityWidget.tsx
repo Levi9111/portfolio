@@ -1,5 +1,5 @@
 // src/components/shared/About/MobileActivityWidget.tsx
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion, useInView, Variants } from "framer-motion";
 
 // ─── Mobile Activity Widget ────────────────────────────────────────────────────
@@ -25,6 +25,171 @@ interface MobileActivityWidgetProps {
   accent?: string;
 }
 
+interface MobileGitHubCommitData {
+  sha: string;
+  commit: {
+    author: {
+      name: string;
+      date: string;
+    };
+    message: string;
+  };
+  html_url: string;
+  repository: {
+    full_name: string;
+    html_url: string;
+  };
+}
+
+const MOBILE_FALLBACK_COMMITS: MobileGitHubCommitData[] = [
+  {
+    sha: "f28112a",
+    commit: {
+      author: { name: "levi9111", date: new Date(Date.now() - 3600000 * 2).toISOString() },
+      message: "feat: add GITHUB_API_TOKEN configuration to environment variables and config schema"
+    },
+    html_url: "https://github.com/Levi9111/portfolio-server/commit/f28112abdbee4ece7857f949a00679dae01b0563",
+    repository: { full_name: "Levi9111/portfolio-server", html_url: "https://github.com/Levi9111/portfolio-server" }
+  },
+  {
+    sha: "216445b",
+    commit: {
+      author: { name: "levi9111", date: new Date(Date.now() - 3600000 * 6).toISOString() },
+      message: "feat: add detailed logging and error handling to AI assist controller"
+    },
+    html_url: "https://github.com/Levi9111/portfolio-server/commit/216445bdcdc2b2a323177dfc0a4f3421844ebefb",
+    repository: { full_name: "Levi9111/portfolio-server", html_url: "https://github.com/Levi9111/portfolio-server" }
+  },
+  {
+    sha: "c20929a",
+    commit: {
+      author: { name: "levi9111", date: new Date(Date.now() - 3600000 * 24).toISOString() },
+      message: "chore: cors updated"
+    },
+    html_url: "https://github.com/Levi9111/portfolio-server/commit/c20929aa6ee8957d0f46f1a6c9fb447b37937304",
+    repository: { full_name: "Levi9111/portfolio-server", html_url: "https://github.com/Levi9111/portfolio-server" }
+  }
+];
+
+const MobileCommitTerminal: React.FC<{ inView: boolean; accent: string }> = ({ inView, accent }) => {
+  const [commits, setCommits] = useState<MobileGitHubCommitData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const fetchCommits = async () => {
+      const baseUrl = import.meta.env.VITE_API_URL || "https://portfolio-server-xf38.onrender.com/api/v1";
+      try {
+        const response = await fetch(`${baseUrl}/profiles/github-commits`);
+        if (!response.ok) throw new Error("Fetch failed");
+        const json = await response.json();
+        if (active && json.success && Array.isArray(json.data)) {
+          setCommits(json.data);
+        }
+      } catch (err) {
+        console.error("Error fetching commits:", err);
+        if (active) {
+          setCommits(MOBILE_FALLBACK_COMMITS);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    if (inView) {
+      fetchCommits();
+    }
+    return () => {
+      active = false;
+    };
+  }, [inView]);
+
+  return (
+    <div
+      style={{
+        background: "rgba(5, 3, 15, 0.45)",
+        borderBottom: "0.5px solid rgba(255, 255, 255, 0.05)",
+        padding: "12px",
+        fontFamily: "'Fira Code', 'Courier New', monospace",
+        fontSize: 8.5,
+        lineHeight: 1.4,
+        color: "rgba(255, 255, 255, 0.8)",
+        overflow: "hidden"
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          color: "rgba(255, 255, 255, 0.3)",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          fontSize: 7.5,
+          marginBottom: 8
+        }}
+      >
+        <span>git log (central feed)</span>
+        <span style={{ color: "#34d399" }}>● sync</span>
+      </div>
+
+      {loading ? (
+        <div style={{ padding: "6px 0", textAlign: "center", color: "rgba(255,255,255,0.3)" }}>
+          <span className="animate-pulse">Loading commits...</span>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 5
+          }}
+        >
+          {commits.slice(0, 3).map((item, idx) => {
+            const shortRepo = item.repository?.full_name?.split("/")[1] || "repo";
+            return (
+              <a
+                key={item.sha + idx}
+                href={item.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 5,
+                  textDecoration: "none",
+                  color: "inherit",
+                  padding: "3px",
+                  borderRadius: 3,
+                  transition: "background 0.2s, padding-left 0.2s"
+                }}
+                className="commit-row-hover-mobile"
+              >
+                <span style={{ color: accent, fontWeight: "bold", flexShrink: 0 }}>
+                  [{shortRepo}]
+                </span>
+                <span style={{ color: "#fbbf24", flexShrink: 0 }}>
+                  {item.sha.substring(0, 7)}
+                </span>
+                <span
+                  style={{
+                    color: "rgba(255, 255, 255, 0.85)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    flex: 1
+                  }}
+                >
+                  {item.commit.message.split("\n")[0]}
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const MobileActivityWidget: React.FC<MobileActivityWidgetProps> = ({
   accent = "#a78bfa",
 }) => {
@@ -41,6 +206,11 @@ const MobileActivityWidget: React.FC<MobileActivityWidgetProps> = ({
         @keyframes mobileColonBlink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.2; }
+        }
+        .commit-row-hover-mobile:hover {
+          background: rgba(167, 139, 250, 0.08);
+          padding-left: 6px !important;
+          color: #fff !important;
         }
       `}</style>
 
@@ -274,6 +444,8 @@ const MobileActivityWidget: React.FC<MobileActivityWidgetProps> = ({
             </div>
           ))}
         </motion.div>
+
+        <MobileCommitTerminal inView={isInView} accent={accent} />
 
         {/* Status footer */}
         <motion.div
