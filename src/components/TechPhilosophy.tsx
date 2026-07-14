@@ -521,151 +521,51 @@ const TechPhilosophy: React.FC = () => {
   const isInView = useInView(sectionRef, { once: true, margin: "-10%" });
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
-
-        #philosophy-section {
-          font-family: 'Outfit', sans-serif;
-          position: relative;
-          padding: 140px 0 120px;
-          background: transparent;
-          overflow: visible;
-        }
-        #philosophy-section::before {
-          content: '';
-          position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.25), transparent);
-          pointer-events: none;
-        }
-
-        .phi-eyebrow {
-          display: inline-flex; align-items: center; gap: 10px;
-          padding: 7px 16px; border-radius: 100px;
-          border: 1px solid rgba(139,92,246,0.2);
-          background: rgba(5,3,15,0.5);
-          backdrop-filter: blur(12px);
-          font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
-          color: rgba(167,139,250,0.85); margin-bottom: 20px;
-        }
-        .phi-eyebrow::before {
-          content: ''; display: block; width: 20px; height: 1px;
-          background: rgba(139,92,246,0.5);
-        }
-
-        .phi-title {
-          font-family: 'Instrument Serif', serif;
-          font-size: clamp(44px, 7vw, 76px);
-          line-height: 1.05; color: #fff; letter-spacing: -1.5px;
-        }
-        .phi-title-accent {
-          font-style: italic;
-          background: linear-gradient(135deg, #a78bfa 0%, #818cf8 45%, #38bdf8 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-          animation: phiHue 8s ease-in-out infinite;
-        }
-        @keyframes phiHue { 0%,100%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(25deg)} }
-
-        .phi-divider {
-          width: 64px; height: 1px; margin: 24px auto 0;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent);
-          position: relative;
-        }
-        .phi-divider::after {
-          content: ''; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
-          width: 4px; height: 4px; border-radius: 50%;
-          background: #a78bfa; box-shadow: 0 0 8px #a78bfa;
-        }
-
-        .phi-desc {
-          font-size: 15px; font-weight: 300;
-          color: rgba(190,190,220,0.45); max-width: 540px;
-          line-height: 1.8; margin: 20px auto 0;
-        }
-
-        .phi-body {
-          display: grid;
-          grid-template-columns: 1fr 420px;
-          gap: 48px;
-          align-items: start;
-        }
-
-        .phi-widget-desktop {
-          display: block;
-        }
-        .phi-widget-mobile {
-          display: none;
-        }
-
-        @media (max-width: 1000px) {
-          .phi-body { grid-template-columns: 1fr; }
-          .phi-body > *:last-child { max-width: 480px; margin: 0 auto; }
-        }
-        @media (max-width: 768px) {
-          #philosophy-section { padding: 100px 0 80px; }
-          .phi-widget-desktop {
-            display: none !important;
-          }
-          .phi-widget-mobile {
-            display: block !important;
-          }
-        }
-      `}</style>
-
-      <section id="philosophy-section" ref={sectionRef}>
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1,
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "0 24px",
-          }}
+    <section id="philosophy-section" ref={sectionRef}>
+      <div className="phi-container">
+        {/* Header */}
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          className="phi-header"
         >
-          {/* Header */}
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate={isInView ? "show" : "hidden"}
-            style={{ textAlign: "center", marginBottom: 64 }}
-          >
-            <motion.div variants={fadeUp}>
-              <div className="phi-eyebrow">How I Build</div>
-            </motion.div>
-            <motion.h2 className="phi-title" variants={fadeUp}>
-              Engineering <span className="phi-title-accent">Philosophy</span>
-            </motion.h2>
-            <motion.div variants={fadeUp}>
-              <div className="phi-divider" />
-            </motion.div>
-            <motion.p className="phi-desc" variants={fadeUp}>
-              Principles I hold to across every project — the same patterns show
-              up whether it's a client app or an open-source tool.
-            </motion.p>
+          <motion.div variants={fadeUp}>
+            <div className="phi-eyebrow">How I Build</div>
           </motion.div>
-
-          {/* Body: principles | code widget */}
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate={isInView ? "show" : "hidden"}
-            className="phi-body"
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {PRINCIPLES.map((principle, i) => (
-                <PrincipleRow
-                  key={principle.id}
-                  principle={principle}
-                  index={i}
-                />
-              ))}
-            </div>
-
-            <CodeSnippetWidget />
+          <motion.h2 className="phi-title" variants={fadeUp}>
+            Engineering <span className="phi-title-accent">Philosophy</span>
+          </motion.h2>
+          <motion.div variants={fadeUp}>
+            <div className="phi-divider" />
           </motion.div>
-        </div>
-      </section>
-    </>
+          <motion.p className="phi-desc" variants={fadeUp}>
+            Principles I hold to across every project — the same patterns show
+            up whether it's a client app or an open-source tool.
+          </motion.p>
+        </motion.div>
+
+        {/* Body: principles | code widget */}
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          className="phi-body"
+        >
+          <div className="phi-list">
+            {PRINCIPLES.map((principle, i) => (
+              <PrincipleRow
+                key={principle.id}
+                principle={principle}
+                index={i}
+              />
+            ))}
+          </div>
+
+          <CodeSnippetWidget />
+        </motion.div>
+      </div>
+    </section>
   );
 };
 
