@@ -838,4 +838,175 @@ a:hover .hero-social-tip   { opacity: 1 !important; }
   }
 }
 
+/* ==========================================================================
+   Services Section (Cleaned Up & Premium)
+   ========================================================================== */
+#services-section {
+  font-family: 'Outfit', sans-serif;
+  position: relative;
+  padding: 140px 0 120px;
+  background: transparent;
+  overflow: visible;
+}
+#services-section::before {
+  content: '';
+  position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.25), transparent);
+  pointer-events: none;
+}
+
+.svc-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.svc-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+/* Premium Card Styles */
+.svc-card {
+  position: relative;
+  padding: 30px 26px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(5, 3, 15, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.svc-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 0%, var(--svc-glow), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.svc-card:hover {
+  border-color: var(--svc-accent-border) !important;
+  background: rgba(5, 3, 15, 0.6) !important;
+}
+
+.svc-card:hover::before {
+  opacity: 1;
+}
+
+.svc-card-glow-line {
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--svc-accent) 99%, transparent);
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.svc-card:hover .svc-card-glow-line {
+  opacity: 1;
+}
+
+.svc-card-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  background: var(--svc-accent-bg);
+  border: 1px solid var(--svc-accent-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.svc-card:hover .svc-card-icon-wrapper {
+  transform: scale(1.08) rotate(-3deg);
+}
+
+.svc-card-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 21px;
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: -0.3px;
+  margin: 0 0 10px;
+  line-height: 1.25;
+}
+
+.svc-card-desc {
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.75;
+  color: rgba(190, 190, 220, 0.5);
+  margin: 0;
+}
+
+.svc-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex: 1;
+}
+
+.svc-card-list-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  color: rgba(200, 200, 230, 0.6);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.svc-card-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--svc-accent);
+  box-shadow: 0 0 5px var(--svc-accent);
+  flex-shrink: 0;
+}
+
+.svc-card-cta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(200, 200, 240, 0.5);
+  font-family: 'Outfit', sans-serif;
+  transition: color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  align-self: flex-start;
+}
+
+.svc-card:hover .svc-card-cta {
+  color: var(--svc-accent);
+}
+
+.svc-card-cta-icon {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.svc-card:hover .svc-card-cta-icon {
+  transform: translate(2px, -2px);
+}
+
 

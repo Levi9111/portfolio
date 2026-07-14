@@ -1,5 +1,5 @@
 // src/components/Services.tsx
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import {
   Layers,
   Server,
@@ -115,130 +115,42 @@ const ServiceCard: React.FC<{ service: Service; index: number }> = ({
   service,
   index,
 }) => {
-  const [hovered, setHovered] = useState(false);
   const Icon = service.icon;
 
   return (
     <motion.article
       variants={cardVariant}
       custom={index}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
       whileHover={{ y: -8 }}
       transition={{ type: "spring", stiffness: 280, damping: 26 }}
+      className="svc-card"
       style={{
-        position: "relative",
-        padding: "30px 26px",
-        borderRadius: 20,
-        overflow: "hidden",
-        border: `1px solid ${hovered ? service.accent + "45" : "rgba(255,255,255,0.07)"}`,
-        background: hovered
-          ? `radial-gradient(circle at 20% 0%, ${service.accent}10, rgba(5,3,15,0.55))`
-          : "rgba(5,3,15,0.45)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        transition: "border-color 0.3s, background 0.3s",
-        display: "flex",
-        flexDirection: "column",
-        gap: 18,
-      }}
+        "--svc-accent": service.accent,
+        "--svc-accent-border": `${service.accent}45`,
+        "--svc-accent-border-subtle": `${service.accent}30`,
+        "--svc-accent-bg": `${service.accent}14`,
+        "--svc-glow": service.glow,
+      } as React.CSSProperties}
     >
       {/* Top glow line */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: "12%",
-          right: "12%",
-          height: 1,
-          background: `linear-gradient(90deg, transparent, ${service.accent}99, transparent)`,
-          opacity: hovered ? 1 : 0,
-          transition: "opacity 0.35s",
-        }}
-        aria-hidden="true"
-      />
+      <div className="svc-card-glow-line" aria-hidden="true" />
 
       {/* Icon */}
-      <div
-        style={{
-          width: 52,
-          height: 52,
-          borderRadius: 15,
-          background: `${service.accent}14`,
-          border: `1px solid ${service.accent}30`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          transition: "transform 0.35s",
-          transform: hovered ? "scale(1.08) rotate(-3deg)" : "scale(1)",
-        }}
-      >
+      <div className="svc-card-icon-wrapper">
         <Icon size={22} color={service.accent} />
       </div>
 
       {/* Title + description */}
       <div>
-        <h3
-          style={{
-            fontFamily: "'Instrument Serif', serif",
-            fontSize: 21,
-            fontWeight: 400,
-            color: "#fff",
-            letterSpacing: "-0.3px",
-            margin: "0 0 10px",
-            lineHeight: 1.25,
-          }}
-        >
-          {service.title}
-        </h3>
-        <p
-          style={{
-            fontSize: 13,
-            fontWeight: 300,
-            lineHeight: 1.75,
-            color: "rgba(190,190,220,0.5)",
-            margin: 0,
-          }}
-        >
-          {service.description}
-        </p>
+        <h3 className="svc-card-title">{service.title}</h3>
+        <p className="svc-card-desc">{service.description}</p>
       </div>
 
       {/* Deliverables list */}
-      <ul
-        style={{
-          listStyle: "none",
-          margin: 0,
-          padding: 0,
-          display: "flex",
-          flexDirection: "column",
-          gap: 9,
-          flex: 1,
-        }}
-      >
+      <ul className="svc-card-list">
         {service.deliverables.map((item) => (
-          <li
-            key={item}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 9,
-              fontSize: 12,
-              color: "rgba(200,200,230,0.6)",
-              fontFamily: "'DM Sans',sans-serif",
-            }}
-          >
-            <span
-              style={{
-                width: 4,
-                height: 4,
-                borderRadius: "50%",
-                background: service.accent,
-                boxShadow: `0 0 5px ${service.accent}`,
-                flexShrink: 0,
-              }}
-              aria-hidden="true"
-            />
+          <li key={item} className="svc-card-list-item">
+            <span className="svc-card-dot" aria-hidden="true" />
             {item}
           </li>
         ))}
@@ -251,30 +163,10 @@ const ServiceCard: React.FC<{ service: Service; index: number }> = ({
             .getElementById("contact-section")
             ?.scrollIntoView({ behavior: "smooth" })
         }
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: 0,
-          border: "none",
-          background: "none",
-          cursor: "pointer",
-          fontSize: 12.5,
-          fontWeight: 500,
-          color: hovered ? service.accent : "rgba(200,200,240,0.5)",
-          fontFamily: "'Outfit',sans-serif",
-          transition: "color 0.25s",
-          alignSelf: "flex-start",
-        }}
+        className="svc-card-cta"
       >
         Discuss a project
-        <ArrowUpRight
-          size={13}
-          style={{
-            transform: hovered ? "translate(2px,-2px)" : "translate(0,0)",
-            transition: "transform 0.25s",
-          }}
-        />
+        <ArrowUpRight size={13} className="svc-card-cta-icon" />
       </button>
     </motion.article>
   );
@@ -288,21 +180,13 @@ const Services: React.FC = () => {
 
   return (
     <section id="services-section" ref={sectionRef}>
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          maxWidth: 1200,
-          margin: "0 auto",
-          padding: "0 24px",
-        }}
-      >
+      <div className="svc-container">
         {/* Header */}
         <motion.div
           variants={stagger}
           initial="hidden"
           animate={isInView ? "show" : "hidden"}
-          style={{ textAlign: "center", marginBottom: 64 }}
+          className="svc-header"
         >
           <motion.div variants={fadeUp}>
             <div className="svc-eyebrow">What I Offer</div>
