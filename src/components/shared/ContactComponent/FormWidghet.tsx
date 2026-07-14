@@ -10,6 +10,21 @@ import { motion } from "framer-motion";
 import { stagger, fadeUp, fadeRight } from "./contactTypes";
 import type { FormData, FormStatus } from "./contactTypes";
 
+const getBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  const isLocalhostDomain = 
+    window.location.hostname === "localhost" || 
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname.startsWith("192.168.");
+    
+  if (!isLocalhostDomain && envUrl && envUrl.includes("localhost")) {
+    console.warn("[API URL Guard] Detected localhost API URL in a production domain. Overriding with production API URL.");
+    return "https://portfolio-server-xf38.onrender.com/api/v1";
+  }
+  
+  return envUrl || "https://portfolio-server-xf38.onrender.com/api/v1";
+};
+
 // ─── Field ────────────────────────────────────────────────────────────────────
 
 interface FieldProps {
@@ -201,9 +216,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     try {
-      const baseUrl =
-        import.meta.env.VITE_API_URL ||
-        "https://portfolio-server-xf38.onrender.com/api/v1";
+      const baseUrl = getBaseUrl();
       console.log(`[AI Assist] Initiating rewrite. Mode: "${mode}", Message: "${currentMsg}"`);
       console.log(`[AI Assist] Fetching from endpoint: ${baseUrl}/ai-assist`);
 
@@ -271,9 +284,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({ isInView }) => {
     }
     setStatus("loading");
 
-    const baseUrl =
-      import.meta.env.VITE_API_URL ||
-      "https://portfolio-server-xf38.onrender.com/api/v1";
+    const baseUrl = getBaseUrl();
     const finalFormData = { ...formData };
 
     try {
